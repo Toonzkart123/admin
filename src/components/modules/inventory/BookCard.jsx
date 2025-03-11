@@ -1,4 +1,3 @@
-// src/components/modules/inventory/BookCard.jsx
 import React from 'react';
 import { Edit, Trash2, Eye, Tag } from 'lucide-react';
 
@@ -81,7 +80,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
         <div className="mt-auto pt-4 flex justify-between border-t border-gray-100">
           <button 
             onClick={() => onView(book.id)} 
-            className="text-gray-600 hover:text-gray-900 flex items-center"
+            className="text-gray-600 hover:text-gray-900 flex items-center transition duration-150"
           >
             <Eye size={16} className="mr-1" />
             <span className="text-sm">View</span>
@@ -89,7 +88,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
           
           <button 
             onClick={() => onEdit(book.id)} 
-            className="text-primary-600 hover:text-primary-900 flex items-center"
+            className="text-blue-600 hover:text-blue-800 flex items-center transition duration-150"
           >
             <Edit size={16} className="mr-1" />
             <span className="text-sm">Edit</span>
@@ -97,7 +96,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
           
           <button 
             onClick={() => onDelete(book.id)} 
-            className="text-red-500 hover:text-red-700 flex items-center"
+            className="text-red-500 hover:text-red-700 flex items-center transition duration-150"
           >
             <Trash2 size={16} className="mr-1" />
             <span className="text-sm">Delete</span>

@@ -1,9 +1,8 @@
-// src/pages/Dashboard.jsx
 import React from 'react';
 import { DollarSign, BookOpen, ShoppingCart, Users } from 'lucide-react';
 import StatCard from '../components/modules/dashboard/StatCard';
 import RecentOrdersTable from '../components/modules/dashboard/RecentOrdersTable';
-// import NotificationsPanel from '../components/modules/dashboard/NotificationsPanel';
+import NotificationsPanel from '../components/modules/dashboard/NotificationsPanel';
 
 // Mock data
 const mockOrders = [
@@ -43,13 +42,13 @@ const mockNotifications = [
 
 const Dashboard = () => {
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="w-full p-6 overflow-hidden">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-500 mt-1">Welcome back, Admin. Here's what's happening today.</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard 
           title="Total Sales" 
           value="$24,589.32" 
@@ -85,7 +84,7 @@ const Dashboard = () => {
           <RecentOrdersTable orders={mockOrders} />
         </div>
         <div>
-          {/* <NotificationsPanel notifications={mockNotifications} /> */}
+          <NotificationsPanel notifications={mockNotifications} />
         </div>
       </div>
     </div>

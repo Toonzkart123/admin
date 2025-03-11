@@ -1,0 +1,44 @@
+src/
+├── assets/                                # Static assets and images
+├── components/                            # Shared UI components
+│   ├── common/                            # Common UI elements like buttons, forms, etc.
+│   ├── layout/                            # Layout components
+│   │   ├── Header.jsx                     # App header with search and user menu
+│   │   ├── MainLayout.jsx                 # Main layout wrapper
+│   │   └── Sidebar.jsx                    # Navigation sidebar
+│   └── modules/                           # Feature-specific components
+│       ├── dashboard/                     # Dashboard module components
+│       │   ├── NotificationsPanel.jsx     # Notifications widget
+│       │   ├── RecentOrdersTable.jsx      # Recent orders table
+│       │   └── StatCard.jsx               # Statistics card component
+│       ├── inventory/                     # Inventory module components
+│       │   ├── BookCard.jsx               # Book card component
+│       │   ├── BookList.jsx               # Grid of book cards
+│       │   ├── BookModal.jsx              # Book creation/editing modal
+│       │   └── InventoryFilters.jsx       # Inventory filtering controls
+│       ├── orders/                        # No separate components files, all in Orders.jsx
+│       └── users/                         # No separate components files, all in Users.jsx
+├── config/                                # Configuration files
+├── context/                               # React Context API definitions
+├── hooks/                                 # Custom React hooks
+├── pages/                                 # Page components for each route
+│   ├── Dashboard.jsx                      # Dashboard page
+│   ├── Inventory.jsx                      # Inventory management page
+│   ├── Login.jsx                          # Login page
+│   ├── NotFound.jsx                       # 404 page
+│   ├── Orders.jsx                         # Orders management page
+│   ├── Users.jsx                          # User management page
+│   ├── Financials.jsx                     # Financial reporting page
+│   ├── Promotions.jsx                     # Promotions management page
+│   ├── Reviews.jsx                        # Reviews management page
+│   ├── Analytics.jsx                      # Analytics dashboard page
+│   ├── Marketing.jsx                      # Marketing tools page
+│   ├── Security.jsx                       # Security settings page
+│   └── Settings.jsx                       # App settings page
+├── services/                              # API services
+├── store/                                 # State management (Redux or Context)
+├── styles/                                # Global styles
+│   └── index.css                          # Main CSS file with Tailwind imports
+├── utils/                                 # Utility functions
+├── App.jsx                                # Main App component with routes
+└── main.jsx                               # Entry point

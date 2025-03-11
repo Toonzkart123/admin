@@ -1,4 +1,3 @@
-// src/components/modules/inventory/InventoryFilters.jsx
 import React, { useState } from 'react';
 import { Search, Filter } from 'lucide-react';
 
@@ -17,14 +16,28 @@ const InventoryFilters = ({ onFilterChange }) => {
     onFilterChange(updatedFilters);
   };
 
+  const handleClearFilters = () => {
+    const defaultFilters = {
+      search: '',
+      category: '',
+      status: '',
+      sortBy: 'title'
+    };
+    setFilters(defaultFilters);
+    onFilterChange(defaultFilters);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-gray-900 flex items-center">
-          <Filter size={18} className="mr-2 text-primary-600" />
+          <Filter size={18} className="mr-2 text-blue-600" />
           Filter Inventory
         </h3>
-        <button className="text-sm text-primary-600 hover:text-primary-900 font-medium">
+        <button 
+          onClick={handleClearFilters}
+          className="text-sm text-blue-600 hover:text-blue-800 font-medium transition duration-150"
+        >
           Clear Filters
         </button>
       </div>
@@ -44,7 +57,7 @@ const InventoryFilters = ({ onFilterChange }) => {
               value={filters.search}
               onChange={handleChange}
               placeholder="Search books..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -57,7 +70,7 @@ const InventoryFilters = ({ onFilterChange }) => {
             name="category"
             value={filters.category}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Categories</option>
             <option value="fiction">Fiction</option>
@@ -77,7 +90,7 @@ const InventoryFilters = ({ onFilterChange }) => {
             name="status"
             value={filters.status}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Status</option>
             <option value="in-stock">In Stock</option>
@@ -95,14 +108,14 @@ const InventoryFilters = ({ onFilterChange }) => {
             name="sortBy"
             value={filters.sortBy}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="title">Title (A-Z)</option>
             <option value="-title">Title (Z-A)</option>
             <option value="price">Price (Low to High)</option>
             <option value="-price">Price (High to Low)</option>
-            <option value="date">Date Added (Newest)</option>
-            <option value="-date">Date Added (Oldest)</option>
+            <option value="stock">Stock (Low to High)</option>
+            <option value="-stock">Stock (High to Low)</option>
           </select>
         </div>
       </div>

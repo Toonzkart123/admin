@@ -21,13 +21,17 @@ const navItems = [
   { title: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ onToggle }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
   const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+    const newCollapsedState = !collapsed;
+    setCollapsed(newCollapsedState);
+    if (onToggle) {
+      onToggle(newCollapsedState);
+    }
   };
 
   const toggleMobileSidebar = () => {
@@ -38,7 +42,7 @@ const Sidebar = () => {
     <>
       {/* Mobile menu button */}
       <button 
-        className="lg:hidden fixed z-20 top-4 left-4 p-2 rounded-md bg-primary-600 text-white"
+        className="lg:hidden fixed z-20 top-4 left-4 p-2 rounded-md bg-blue-600 text-white"
         onClick={toggleMobileSidebar}
       >
         {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -53,35 +57,52 @@ const Sidebar = () => {
       )}
 
       {/* Sidebar */}
-      <aside 
-        className={`fixed top-0 left-0 z-10 h-full bg-white shadow-lg transition-all duration-300 
+      <div 
+        className={`fixed top-0 left-0 h-screen bg-white shadow-lg z-10 overflow-y-auto transition-all duration-300
           ${collapsed ? 'w-20' : 'w-64'} 
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b">
-          <div className={`flex items-center ${collapsed ? 'justify-center w-full' : ''}`}>
-            <BookOpen className="text-primary-600" size={28} />
-            {!collapsed && <span className="ml-2 text-xl font-bold text-gray-800">BookAdmin</span>}
-          </div>
-          <button 
-            onClick={toggleSidebar} 
-            className="hidden lg:block text-gray-500 hover:text-primary-600"
-          >
-            <ChevronDown 
-              className={`transform transition-transform ${collapsed ? 'rotate-90' : '-rotate-90'}`} 
-            />
-          </button>
+        <div className="h-16 border-b flex items-center">
+          {collapsed ? (
+            <div className="w-full flex justify-center">
+              <BookOpen className="text-blue-600" size={28} />
+            </div>
+          ) : (
+            <div className="w-full flex items-center justify-between px-4">
+              <div className="flex items-center">
+                <BookOpen className="text-blue-600" size={28} />
+                <span className="ml-2 text-xl font-bold text-gray-800">BookAdmin</span>
+              </div>
+              <button 
+                onClick={toggleSidebar} 
+                className="text-gray-500 hover:text-blue-600 focus:outline-none"
+              >
+                <ChevronDown className="transform -rotate-90" />
+              </button>
+            </div>
+          )}
         </div>
 
-        <nav className="mt-6">
-          <ul className="space-y-2 px-2">
+        {collapsed && (
+          <div className="py-2 flex justify-center border-b">
+            <button 
+              onClick={toggleSidebar} 
+              className="text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <ChevronDown className="transform rotate-90" />
+            </button>
+          </div>
+        )}
+
+        <nav className="py-4">
+          <ul className="space-y-1 px-2">
             {navItems.map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
                   className={`flex items-center p-3 rounded-lg transition-colors
                     ${location.pathname === item.path ? 
-                      'bg-primary-50 text-primary-600' : 
+                      'bg-blue-50 text-blue-600' : 
                       'text-gray-600 hover:bg-gray-100'
                     }
                     ${collapsed ? 'justify-center' : ''}`}
@@ -93,7 +114,7 @@ const Sidebar = () => {
             ))}
           </ul>
         </nav>
-      </aside>
+      </div>
     </>
   );
 };
