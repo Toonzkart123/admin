@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   BookOpen, ShoppingCart, Users, DollarSign, Tag, 
   Star, BarChart2, Search, Shield, Settings, 
-  ChevronDown, Home, Menu, X 
+  ChevronDown, Home, Menu, X, Store 
 } from 'lucide-react';
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { title: 'Inventory', icon: <BookOpen />, path: '/inventory' },
   { title: 'Orders', icon: <ShoppingCart />, path: '/orders' },
   { title: 'Users', icon: <Users />, path: '/users' },
+  { title: 'Stores', icon: <Store />, path: '/stores' },
   { title: 'Financials', icon: <DollarSign />, path: '/financials' },
   { title: 'Promotions', icon: <Tag />, path: '/promotions' },
   { title: 'Reviews', icon: <Star />, path: '/reviews' },
