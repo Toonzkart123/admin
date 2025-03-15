@@ -198,13 +198,13 @@ const Users = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+    <div className="w-full p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-500 mt-1">Manage your users and their permissions</p>
+          <p className="text-gray-500 mt-2">Manage your users and their permissions</p>
         </div>
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button 
             onClick={handleAddUser}
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
@@ -221,9 +221,9 @@ const Users = () => {
       
       {/* User filters */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4 md:gap-0">
           <div className="flex items-center">
-            <Filter size={18} className="mr-2 text-blue-600" />
+            <Filter size={18} className="mr-3 text-blue-600" />
             <h3 className="text-lg font-medium text-gray-900">User Filters</h3>
           </div>
           <div className="relative w-full md:w-64">
@@ -312,22 +312,22 @@ const Users = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Activity
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -342,38 +342,38 @@ const Users = () => {
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.id}</div>
+                        <div className="text-sm text-gray-500 mt-1">{user.id}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{user.email}</div>
-                    <div className="text-sm text-gray-500">{user.phone}</div>
+                    <div className="text-sm text-gray-500 mt-1">{user.phone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(user.role)}`}>
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(user.role)}`}>
                       {user.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(user.status)}`}>
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(user.status)}`}>
                       {user.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div>Joined: {formatDate(user.joinDate)}</div>
-                    <div>Last active: {formatDate(user.lastActive)}</div>
+                    <div className="mt-1">Last active: {formatDate(user.lastActive)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button 
                       onClick={() => handleViewProfile(user.id)}
-                      className="text-blue-600 hover:text-blue-800 mr-3 transition duration-150"
+                      className="text-blue-600 hover:text-blue-800 mr-4 transition duration-150"
                     >
                       View
                     </button>
                     <button 
                       onClick={() => handleEditUser(user.id)}
-                      className="text-indigo-600 hover:text-indigo-800 mr-3 transition duration-150"
+                      className="text-indigo-600 hover:text-indigo-800 mr-4 transition duration-150"
                     >
                       Edit
                     </button>
@@ -381,7 +381,7 @@ const Users = () => {
                       onClick={() => handleToggleStatus(user.id)}
                       className={`${
                         user.status === 'Active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'
-                      } mr-3 transition duration-150`}
+                      } mr-4 transition duration-150`}
                     >
                       {user.status === 'Active' ? 'Deactivate' : 'Activate'}
                     </button>
@@ -409,8 +409,8 @@ const Users = () => {
             Showing {filteredUsers.length} of {users.length} users
           </div>
           <div className="flex-1 flex justify-end">
-            <nav className="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+            <nav className="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+              <button className="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                 Previous
               </button>
               <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600 hover:bg-blue-100">
@@ -419,7 +419,7 @@ const Users = () => {
               <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
                 2
               </button>
-              <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              <button className="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                 Next
               </button>
             </nav>
@@ -438,15 +438,15 @@ const Users = () => {
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              <div className="bg-white px-6 pt-6 pb-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
                   {selectedUser ? 'Edit User' : 'Add New User'}
                 </h3>
                 
                 <form>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         Full Name
                       </label>
                       <input
@@ -454,12 +454,12 @@ const Users = () => {
                         id="name"
                         name="name"
                         defaultValue={selectedUser?.name || ''}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
                     
                     <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email Address
                       </label>
                       <input
@@ -467,12 +467,12 @@ const Users = () => {
                         id="email"
                         name="email"
                         defaultValue={selectedUser?.email || ''}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
                     
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                         Phone Number
                       </label>
                       <input
@@ -480,19 +480,19 @@ const Users = () => {
                         id="phone"
                         name="phone"
                         defaultValue={selectedUser?.phone || ''}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
                     
                     <div>
-                      <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
                         Role
                       </label>
                       <select
                         id="role"
                         name="role"
                         defaultValue={selectedUser?.role || 'Customer'}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                       >
                         <option value="Customer">Customer</option>
                         <option value="Admin">Admin</option>
@@ -501,14 +501,14 @@ const Users = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
                         Status
                       </label>
                       <select
                         id="status"
                         name="status"
                         defaultValue={selectedUser?.status || 'Active'}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                        className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                       >
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
@@ -517,21 +517,21 @@ const Users = () => {
                     
                     {!selectedUser && (
                       <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                           Password
                         </label>
                         <input
                           type="password"
                           id="password"
                           name="password"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                       </div>
                     )}
                   </div>
                 </form>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse">
                 <button 
                   type="button" 
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
@@ -573,12 +573,12 @@ const Users = () => {
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="bg-white px-6 pt-6 pb-6">
                 <div className="flex justify-between items-start mb-6">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
                     User Profile
                   </h3>
-                  <span className={`px-2 py-1 text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(selectedUser.status)}`}>
+                  <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(selectedUser.status)}`}>
                     {selectedUser.status}
                   </span>
                 </div>
@@ -589,20 +589,20 @@ const Users = () => {
                       <div className="h-32 w-32 mx-auto rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-4xl">
                         {selectedUser.name.split(' ').map(n => n[0]).join('')}
                       </div>
-                      <h4 className="mt-2 text-xl font-medium text-gray-900">{selectedUser.name}</h4>
-                      <span className={`px-2 py-1 text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(selectedUser.role)}`}>
+                      <h4 className="mt-3 text-xl font-medium text-gray-900">{selectedUser.name}</h4>
+                      <span className={`px-3 py-1 text-xs leading-5 font-semibold rounded-full ${getRoleBadgeClass(selectedUser.role)}`}>
                         {selectedUser.role}
                       </span>
                     </div>
                     
                     <div className="border-t border-gray-200 py-4">
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">Contact Information</h4>
+                      <h4 className="text-sm font-medium text-gray-500 mb-3">Contact Information</h4>
                       <p className="text-sm flex items-center">
-                        <Mail size={16} className="text-gray-400 mr-2" />
+                        <Mail size={16} className="text-gray-400 mr-3" />
                         {selectedUser.email}
                       </p>
                       <p className="text-sm flex items-center mt-2">
-                        <Phone size={16} className="text-gray-400 mr-2" />
+                        <Phone size={16} className="text-gray-400 mr-3" />
                         {selectedUser.phone}
                       </p>
                     </div>
@@ -610,15 +610,15 @@ const Users = () => {
                   
                   <div className="col-span-1">
                     <div className="border-b border-gray-200 pb-4">
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">Account Details</h4>
+                      <h4 className="text-sm font-medium text-gray-500 mb-3">Account Details</h4>
                       <p className="text-sm"><span className="font-medium">User ID:</span> {selectedUser.id}</p>
-                      <p className="text-sm mt-1"><span className="font-medium">Joined:</span> {formatDate(selectedUser.joinDate)}</p>
-                      <p className="text-sm mt-1"><span className="font-medium">Last Active:</span> {formatDate(selectedUser.lastActive)}</p>
+                      <p className="text-sm mt-2"><span className="font-medium">Joined:</span> {formatDate(selectedUser.joinDate)}</p>
+                      <p className="text-sm mt-2"><span className="font-medium">Last Active:</span> {formatDate(selectedUser.lastActive)}</p>
                     </div>
                     
                     {selectedUser.role === 'Customer' && (
                       <div className="pt-4">
-                        <h4 className="text-sm font-medium text-gray-500 mb-2">Order History</h4>
+                        <h4 className="text-sm font-medium text-gray-500 mb-3">Order History</h4>
                         <div className="bg-gray-50 p-4 rounded-md">
                           <div className="flex justify-between mb-2">
                             <span className="text-sm text-gray-500">Total Orders</span>
@@ -630,114 +630,114 @@ const Users = () => {
                           </div>
                         </div>
                         <button className="mt-4 inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium transition duration-150">
-                         <Eye size={16} className="mr-1" />
-                         View Order History
-                       </button>
-                     </div>
-                   )}
-                   
-                   {(selectedUser.role === 'Admin' || selectedUser.role === 'Support') && (
-                     <div className="pt-4">
-                       <h4 className="text-sm font-medium text-gray-500 mb-2">Permissions</h4>
-                       <div className="space-y-2">
-                         <div className="flex items-center">
-                           <input 
-                             id="perm-orders" 
-                             type="checkbox" 
-                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                             defaultChecked={selectedUser.role === 'Admin'}
-                           />
-                           <label htmlFor="perm-orders" className="ml-2 block text-sm text-gray-900">
-                             Manage Orders
-                           </label>
-                         </div>
-                         <div className="flex items-center">
-                           <input 
-                             id="perm-inventory" 
-                             type="checkbox" 
-                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                             defaultChecked={selectedUser.role === 'Admin'}
-                           />
-                           <label htmlFor="perm-inventory" className="ml-2 block text-sm text-gray-900">
-                             Manage Inventory
-                           </label>
-                         </div>
-                         <div className="flex items-center">
-                           <input 
-                             id="perm-users" 
-                             type="checkbox" 
-                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                             defaultChecked={selectedUser.role === 'Admin'}
-                           />
-                           <label htmlFor="perm-users" className="ml-2 block text-sm text-gray-900">
-                             Manage Users
-                           </label>
-                         </div>
-                         <div className="flex items-center">
-                           <input 
-                             id="perm-settings" 
-                             type="checkbox" 
-                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                             defaultChecked={selectedUser.role === 'Admin'}
-                           />
-                           <label htmlFor="perm-settings" className="ml-2 block text-sm text-gray-900">
-                             Manage Settings
-                           </label>
-                         </div>
-                       </div>
-                     </div>
-                   )}
-                 </div>
-               </div>
-             </div>
-             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-               <button 
-                 type="button" 
-                 className="ml-3 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                 onClick={() => handleEditUser(selectedUser.id)}
-               >
-                 <Edit size={16} className="mr-2" />
-                 Edit Profile
-               </button>
-               {selectedUser.status === 'Active' ? (
-                 <button 
-                   type="button" 
-                   className="ml-3 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-                   onClick={() => {
-                     handleToggleStatus(selectedUser.id);
-                     setShowUserProfile(false);
-                   }}
-                 >
-                   <Lock size={16} className="mr-2" />
-                   Deactivate
-                 </button>
-               ) : (
-                 <button 
-                   type="button" 
-                   className="ml-3 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
-                   onClick={() => {
-                     handleToggleStatus(selectedUser.id);
-                     setShowUserProfile(false);
-                   }}
-                 >
-                   <UserCheck size={16} className="mr-2" />
-                   Activate
-                 </button>
-               )}
-               <button 
-                 type="button" 
-                 className="mt-3 inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                 onClick={() => setShowUserProfile(false)}
-               >
-                 Close
-               </button>
-             </div>
-           </div>
-         </div>
-       </div>
-     )}
-   </div>
- );
+                          <Eye size={16} className="mr-2" />
+                          View Order History
+                        </button>
+                      </div>
+                    )}
+                    
+                    {(selectedUser.role === 'Admin' || selectedUser.role === 'Support') && (
+                      <div className="pt-4">
+                        <h4 className="text-sm font-medium text-gray-500 mb-3">Permissions</h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center">
+                            <input 
+                              id="perm-orders" 
+                              type="checkbox" 
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              defaultChecked={selectedUser.role === 'Admin'}
+                            />
+                            <label htmlFor="perm-orders" className="ml-3 block text-sm text-gray-900">
+                              Manage Orders
+                            </label>
+                          </div>
+                          <div className="flex items-center">
+                            <input 
+                              id="perm-inventory" 
+                              type="checkbox" 
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              defaultChecked={selectedUser.role === 'Admin'}
+                            />
+                            <label htmlFor="perm-inventory" className="ml-3 block text-sm text-gray-900">
+                              Manage Inventory
+                            </label>
+                          </div>
+                          <div className="flex items-center">
+                            <input 
+                              id="perm-users" 
+                              type="checkbox" 
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              defaultChecked={selectedUser.role === 'Admin'}
+                            />
+                            <label htmlFor="perm-users" className="ml-3 block text-sm text-gray-900">
+                              Manage Users
+                            </label>
+                          </div>
+                          <div className="flex items-center">
+                            <input 
+                              id="perm-settings" 
+                              type="checkbox" 
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              defaultChecked={selectedUser.role === 'Admin'}
+                            />
+                            <label htmlFor="perm-settings" className="ml-3 block text-sm text-gray-900">
+                              Manage Settings
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse">
+                <button 
+                  type="button" 
+                  className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => handleEditUser(selectedUser.id)}
+                >
+                  <Edit size={16} className="mr-2" />
+                  Edit Profile
+                </button>
+                {selectedUser.status === 'Active' ? (
+                  <button 
+                    type="button" 
+                    className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    onClick={() => {
+                      handleToggleStatus(selectedUser.id);
+                      setShowUserProfile(false);
+                    }}
+                  >
+                    <Lock size={16} className="mr-2" />
+                    Deactivate
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    onClick={() => {
+                      handleToggleStatus(selectedUser.id);
+                      setShowUserProfile(false);
+                    }}
+                  >
+                    <UserCheck size={16} className="mr-2" />
+                    Activate
+                  </button>
+                )}
+                <button 
+                  type="button" 
+                  className="mt-3 inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => setShowUserProfile(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Users;

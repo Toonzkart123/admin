@@ -152,32 +152,34 @@ const Inventory = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
-          <p className="text-gray-500 mt-1">Manage your book listings and stock</p>
+    <div className="w-full p-6">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
+            <p className="text-gray-500 mt-1">Manage your book listings and stock</p>
+          </div>
+          <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-2">
+            <button 
+              onClick={handleAddBook}
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+            >
+              <PlusCircle size={16} className="mr-2" />
+              Add New Book
+            </button>
+            <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150">
+              <UploadCloud size={16} className="mr-2" />
+              Bulk Upload
+            </button>
+            <button className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+              <Download size={16} className="mr-2" />
+              Export
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-          <button 
-            onClick={handleAddBook}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
-          >
-            <PlusCircle size={16} className="mr-2" />
-            Add New Book
-          </button>
-          <button className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150">
-            <UploadCloud size={16} className="mr-2" />
-            Bulk Upload
-          </button>
-          <button className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
-            <Download size={16} className="mr-2" />
-            Export
-          </button>
-        </div>
+        
+        <InventoryFilters onFilterChange={handleFilterChange} />
       </div>
-      
-      <InventoryFilters onFilterChange={handleFilterChange} />
       
       <BookList 
         books={filteredBooks} 
