@@ -86,7 +86,7 @@ const Dashboard = () => {
         const sortedOrders = formattedOrders.sort((a, b) => {
           return new Date(b.date) - new Date(a.date);
         });
-        setOrders(sortedOrders.slice(0, 4));
+        setOrders(sortedOrders.slice(0, 5));
         setLoading(false);
       } catch (err) {
         console.error('Error fetching orders:', err);

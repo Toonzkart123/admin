@@ -3,7 +3,10 @@ import { Edit, Trash2, Eye, Tag } from 'lucide-react';
 
 const BookCard = ({ book, onEdit, onDelete, onView }) => {
   const getStatusBadgeClass = (status) => {
-    switch(status) {
+    // Convert status to lowercase and normalize format
+    const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
+    
+    switch(normalizedStatus) {
       case 'in-stock':
         return 'bg-green-100 text-green-800';
       case 'low-stock':
@@ -17,12 +20,34 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
     }
   };
 
+  // Format the status display text
+  const formatStatus = (status) => {
+    if (!status) return 'Unknown';
+    
+    // Handle cases like "In Stock" or "in-stock" or "InStock"
+    const words = status.replace(/-/g, ' ').split(' ');
+    return words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  };
+
+  // Handle image URL from API
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    // If it's already a full URL
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // If it's a path from the API
+    return `https://backend-lzb7.onrender.com${imagePath}`;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col">
       <div className="h-48 bg-gray-200 relative">
-        {book.coverImage ? (
+        {book.image ? (
           <img 
-            src={book.coverImage} 
+            src={getImageUrl(book.image)} 
             alt={book.title} 
             className="w-full h-full object-cover"
           />
@@ -47,7 +72,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
           </div>
           <div className="flex flex-col items-end">
             <span className="font-bold text-gray-900">${book.price.toFixed(2)}</span>
-            {book.originalPrice && (
+            {book.originalPrice && book.originalPrice > 0 && (
               <span className="text-sm text-gray-500 line-through">
                 ${book.originalPrice.toFixed(2)}
               </span>
@@ -57,9 +82,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
         
         <div className="mt-3 flex flex-wrap gap-1">
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(book.status)}`}>
-            {book.status === 'in-stock' ? 'In Stock' : 
-              book.status === 'low-stock' ? 'Low Stock' : 
-              book.status === 'out-of-stock' ? 'Out of Stock' : 'Discontinued'}
+            {formatStatus(book.status)}
           </span>
           
           {book.category && (
@@ -79,7 +102,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
         
         <div className="mt-auto pt-4 flex justify-between border-t border-gray-100">
           <button 
-            onClick={() => onView(book.id)} 
+            onClick={() => onView && onView(book._id)} 
             className="text-gray-600 hover:text-gray-900 flex items-center transition duration-150"
           >
             <Eye size={16} className="mr-1" />
@@ -87,7 +110,7 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
           </button>
           
           <button 
-            onClick={() => onEdit(book.id)} 
+            onClick={() => onEdit(book._id)} 
             className="text-blue-600 hover:text-blue-800 flex items-center transition duration-150"
           >
             <Edit size={16} className="mr-1" />
@@ -95,7 +118,11 @@ const BookCard = ({ book, onEdit, onDelete, onView }) => {
           </button>
           
           <button 
-            onClick={() => onDelete(book.id)} 
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete "${book.title}"?`)) {
+                onDelete(book._id);
+              }
+            }} 
             className="text-red-500 hover:text-red-700 flex items-center transition duration-150"
           >
             <Trash2 size={16} className="mr-1" />

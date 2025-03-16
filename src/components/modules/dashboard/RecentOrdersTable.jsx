@@ -1,13 +1,22 @@
-
-import React, { useState } from 'react';
-import OrderDetailsModal from './OrderDetailsModal';
+// src/components/RecentOrdersTable.jsx
+import React, { useState, useEffect } from 'react';
+import OrderDetailsModal from '../../OrderDetailsModal'; // Fixed import path
 
 const RecentOrdersTable = ({ orders }) => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  
+  // This effect ensures orderDetails is properly updated when an order is selected
+  useEffect(() => {
+    if (selectedOrderId) {
+      fetchOrderDetails(selectedOrderId);
+    } else {
+      // Clear orderDetails when no order is selected
+      setOrderDetails(null);
+    }
+  }, [selectedOrderId]);
 
   const fetchOrderDetails = async (orderId) => {
     setLoading(true);
@@ -23,6 +32,8 @@ const RecentOrdersTable = ({ orders }) => {
         throw new Error('Authentication token not found');
       }
 
+      console.log('Fetching order details for ID:', orderId);
+
       const response = await fetch(`https://backend-lzb7.onrender.com/api/admin/orders/${orderId}`, {
         method: 'GET',
         headers: {
@@ -36,116 +47,87 @@ const RecentOrdersTable = ({ orders }) => {
       }
 
       const data = await response.json();
-      
-      // Log the API response for debugging
-      console.log('Order API Response:', data);
-      console.log('Books array:', data.books);
-      
-      // Transform API response to match the format expected by our modal
-      const formattedOrder = {
-        id: data._id || data.orderId || data.id,
-        customer: data.user?.name || data.customerName || 'Unknown Customer',
-        date: new Date(data.createdAt).toISOString().split('T')[0],
-        amount: data.totalAmount || data.totalPrice || 0,
-        status: data.status || 'Processing',
-        // Handle the books array from the API response with populated book data
-        items: Array.isArray(data.books) 
-          ? data.books.map(item => ({
-              id: item._id || '',
-              bookId: item.book?._id || item.book || '',
-              name: item.book?.title || 'Unknown Book',
-              quantity: item.quantity || 0,
-              price: item.book?.price || (data.totalAmount / (item.quantity || 1)).toFixed(2) || 0
-            }))
-          : [],
-        shippingAddress: data.shippingAddress || {},
-        paymentMethod: data.paymentMethod || 'N/A',
-        paymentStatus: data.isPaid ? 'Paid' : 'Pending'
-      };
-
-      setOrderDetails(formattedOrder);
-      setLoading(false);
+      console.log('Order details received:', data);
+      setOrderDetails(data);
     } catch (err) {
       console.error('Error fetching order details:', err);
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleViewOrder = (orderId) => {
+    console.log('View order clicked:', orderId);
     setSelectedOrderId(orderId);
-    setIsEditing(false);
-    fetchOrderDetails(orderId);
+    // fetchOrderDetails is now called by the useEffect
   };
 
   const handleEditOrder = (orderId) => {
+    console.log('Edit order clicked:', orderId);
     setSelectedOrderId(orderId);
-    setIsEditing(true);
-    fetchOrderDetails(orderId);
-    console.log("Edit mode enabled for order:", orderId);
+    // fetchOrderDetails is now called by the useEffect
   };
 
-  const handleSaveOrder = async (updatedOrder) => {
+  const getStatusBadgeClass = (status) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
+    
+    switch(status.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800';
+      case 'returned':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    const options = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit'
+    };
+    
     try {
-      // Get the token from localStorage
-      const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}');
-      const adminToken = localStorage.getItem('adminToken');
-      const token = adminToken || adminInfo.token;
-      
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-
-      // Prepare the request body
-      const updateData = {
-        status: updatedOrder.status,
-        totalAmount: updatedOrder.amount
-      };
-
-      // Only include items if they exist and have been modified
-      if (updatedOrder.items && updatedOrder.items.length > 0) {
-        updateData.books = updatedOrder.items.map(item => ({
-          book: item.id,
-          quantity: item.quantity
-        }));
-      }
-
-      const response = await fetch(`https://backend-lzb7.onrender.com/api/admin/orders/${updatedOrder.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      // Update the local order details with the changes
-      setOrderDetails(updatedOrder);
-      
-      // Update the order in the orders list (for display in the table)
-      // Note: This requires the parent component to provide a way to update the orders
-      
-      // Exit edit mode
-      setIsEditing(false);
-      
-      // Show success message (optional)
-      alert("Order updated successfully!");
-      
-    } catch (err) {
-      console.error('Error updating order:', err);
-      throw err; // Re-throw to be caught by the modal
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (e) {
+      return 'Invalid Date';
     }
   };
 
   const closeModal = () => {
+    console.log('Closing modal');
     setSelectedOrderId(null);
-    setOrderDetails(null);
-    setIsEditing(false);
   };
+
+  // Function to refresh order details after update
+  const refreshOrderDetails = () => {
+    console.log('Refreshing order details for ID:', selectedOrderId);
+    if (selectedOrderId) {
+      fetchOrderDetails(selectedOrderId);
+    }
+  };
+
+  // Debug: Log current state values
+  console.log('Current state:', { 
+    selectedOrderId, 
+    hasOrderDetails: !!orderDetails,
+    loading,
+    error
+  });
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -226,15 +208,44 @@ const RecentOrdersTable = ({ orders }) => {
         </button>
       </div>
 
-      {/* Order Details Modal */}
-      {selectedOrderId && (
+      {/* Loading indicator while fetching order details */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+              <p>Loading order details...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && !loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md">
+            <h3 className="text-lg font-medium text-red-600 mb-2">Error Loading Order</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <div className="flex justify-end">
+              <button 
+                onClick={closeModal}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal - Only render when we have order details */}
+      {selectedOrderId && orderDetails && !loading && !error && (
         <OrderDetailsModal 
           order={orderDetails}
-          loading={loading}
-          error={error}
-          isEditing={isEditing}
           onClose={closeModal}
-          onSave={handleSaveOrder}
+          onOrderUpdate={refreshOrderDetails}
+          getStatusBadgeClass={getStatusBadgeClass}
+          formatDate={formatDate}
         />
       )}
     </div>

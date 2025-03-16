@@ -1,78 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, UploadCloud, Download } from 'lucide-react';
 import InventoryFilters from '../components/modules/inventory/InventoryFilters';
 import BookList from '../components/modules/inventory/BookList';
 import BookModal from '../components/modules/inventory/BookModal';
 
-// Mock data
-const mockBooks = [
-  {
-    id: 1,
-    title: 'To Kill a Mockingbird',
-    author: 'Harper Lee',
-    isbn: '9780061120084',
-    category: 'Fiction',
-    price: 14.99,
-    originalPrice: 19.99,
-    stock: 42,
-    status: 'in-stock',
-    coverImage: '/api/placeholder/200/300',
-    discount: 25,
-    publisher: 'HarperCollins',
-    publishDate: '2006-05-23',
-  },
-  {
-    id: 2,
-    title: 'The Great Gatsby',
-    author: 'F. Scott Fitzgerald',
-    isbn: '9780743273565',
-    category: 'Fiction',
-    price: 12.99,
-    originalPrice: null,
-    stock: 3,
-    status: 'low-stock',
-    coverImage: '/api/placeholder/200/300',
-    discount: 0,
-    publisher: 'Scribner',
-    publishDate: '2004-09-30',
-  },
-  {
-    id: 3,
-    title: 'Sapiens: A Brief History of Humankind',
-    author: 'Yuval Noah Harari',
-    isbn: '9780062316097',
-    category: 'Non-Fiction',
-    price: 24.99,
-    originalPrice: 29.99,
-    stock: 28,
-    status: 'in-stock',
-    coverImage: '/api/placeholder/200/300',
-    discount: 17,
-    publisher: 'Harper',
-    publishDate: '2015-02-10',
-  },
-  {
-    id: 4,
-    title: 'Becoming',
-    author: 'Michelle Obama',
-    isbn: '9781524763138',
-    category: 'Biography',
-    price: 18.99,
-    originalPrice: 32.50,
-    stock: 0,
-    status: 'out-of-stock',
-    coverImage: '/api/placeholder/200/300',
-    discount: 42,
-    publisher: 'Crown',
-    publishDate: '2018-11-13',
-  }
-];
-
 const Inventory = () => {
-  const [books, setBooks] = useState(mockBooks);
-  const [filteredBooks, setFilteredBooks] = useState(mockBooks);
+  const [books, setBooks] = useState([]);
+  const [filteredBooks, setFilteredBooks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentBook, setCurrentBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch books from API
+  const fetchBooks = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        throw new Error('Authentication token is required');
+      }
+      
+      const response = await fetch('https://backend-lzb7.onrender.com/api/admin/books', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch books: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setBooks(data);
+      setFilteredBooks(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching books:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  // Load books on component mount
+  useEffect(() => {
+    fetchBooks();
+  }, []);
 
   const handleFilterChange = (filters) => {
     // Simple filtering implementation
@@ -88,11 +63,11 @@ const Inventory = () => {
     }
     
     if (filters.category) {
-      results = results.filter(book => book.category.toLowerCase() === filters.category);
+      results = results.filter(book => book.category.toLowerCase() === filters.category.toLowerCase());
     }
     
     if (filters.status) {
-      results = results.filter(book => book.status === filters.status);
+      results = results.filter(book => book.status.toLowerCase() === filters.status.toLowerCase());
     }
     
     // Sort results
@@ -116,39 +91,60 @@ const Inventory = () => {
   };
 
   const handleEditBook = (id) => {
-    const bookToEdit = books.find(book => book.id === id);
+    const bookToEdit = books.find(book => book._id === id);
     setCurrentBook(bookToEdit);
     setIsModalOpen(true);
   };
 
-  const handleDeleteBook = (id) => {
-    if (window.confirm('Are you sure you want to delete this book?')) {
-      const updatedBooks = books.filter(book => book.id !== id);
+  const handleDeleteBook = async (id) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        throw new Error('Authentication token is required');
+      }
+      
+      // Show loading state
+      setLoading(true);
+      
+      const response = await fetch(`https://backend-lzb7.onrender.com/api/admin/books/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete book: ${response.status} ${response.statusText}`);
+      }
+      
+      // Update state after successful deletion
+      const updatedBooks = books.filter(book => book._id !== id);
       setBooks(updatedBooks);
       setFilteredBooks(updatedBooks);
+      
+      // Show success message
+      alert('Book deleted successfully');
+    } catch (err) {
+      console.error('Error deleting book:', err);
+      alert(`Failed to delete book: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSaveBook = (bookData) => {
-    let updatedBooks;
-    
-    if (bookData.id) {
-      // Update existing book
-      updatedBooks = books.map(book => 
-        book.id === bookData.id ? { ...bookData } : book
-      );
-    } else {
-      // Add new book
-      const newBook = {
-        ...bookData,
-        id: Math.max(...books.map(book => book.id), 0) + 1,
-      };
-      updatedBooks = [...books, newBook];
+  const handleSaveBook = async (responseData) => {
+    // The BookModal now handles the API calls directly and returns the response data
+    // We just need to refresh the book list here
+    try {
+      await fetchBooks();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Error refreshing books:', err);
+      alert(`Failed to refresh books: ${err.message}`);
     }
-    
-    setBooks(updatedBooks);
-    setFilteredBooks(updatedBooks);
-    setIsModalOpen(false);
   };
 
   return (
@@ -181,11 +177,21 @@ const Inventory = () => {
         <InventoryFilters onFilterChange={handleFilterChange} />
       </div>
       
-      <BookList 
-        books={filteredBooks} 
-        onEdit={handleEditBook} 
-        onDelete={handleDeleteBook} 
-      />
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading inventory...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-red-500">Error: {error}</p>
+        </div>
+      ) : (
+        <BookList 
+          books={filteredBooks} 
+          onEdit={handleEditBook} 
+          onDelete={handleDeleteBook} 
+        />
+      )}
       
       {isModalOpen && (
         <BookModal 

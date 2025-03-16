@@ -1,4 +1,4 @@
-// src/components/stores/overview/StoreBasicInfo.jsx
+// src/components/stores/StoreBasicInfo.jsx
 import React from 'react';
 import { MapPin, Phone, Mail, User, Store } from 'lucide-react';
 import { getStatusBadgeClass } from '../../pages/StoreDetails';
@@ -52,7 +52,7 @@ const StoreBasicInfo = ({ store }) => {
           <div>
             {store.website && (
               <p className="text-sm text-gray-500 mb-2">
-                <span className="font-medium">Website:</span> <a href={`https://${store.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{store.website}</a>
+                <span className="font-medium">Website:</span> <a href={store.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{store.website}</a>
               </p>
             )}
             {store.storeHours && (
@@ -85,25 +85,26 @@ const StoreBasicInfo = ({ store }) => {
 };
 
 const StoreActivityStats = ({ store }) => {
+  const joinDate = new Date(store.joinDate || Date.now());
+  const formattedJoinDate = joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
   return (
     <div>
       <h3 className="text-md font-medium text-gray-900 mb-2">Store Activity</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-2xl font-bold text-gray-900">{store.activeListings}</p>
+          <p className="text-2xl font-bold text-gray-900">{store.activeListings || 0}</p>
           <p className="text-sm text-gray-500">Active Listings</p>
         </div>
         <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-2xl font-bold text-gray-900">{store.totalInventory}</p>
+          <p className="text-2xl font-bold text-gray-900">{store.totalInventory || 0}</p>
           <p className="text-sm text-gray-500">Total Inventory</p>
         </div>
-        {store.salesLastMonth && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-2xl font-bold text-gray-900">${store.salesLastMonth.toLocaleString()}</p>
-            <p className="text-sm text-gray-500">Sales Last Month</p>
-          </div>
-        )}
-        {store.topCategories && (
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <p className="text-2xl font-bold text-gray-900">{formattedJoinDate}</p>
+          <p className="text-sm text-gray-500">Joined Date</p>
+        </div>
+        {store.topCategories && store.topCategories.length > 0 && (
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex flex-wrap gap-1">
               {store.topCategories.map((category, index) => (

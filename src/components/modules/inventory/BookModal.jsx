@@ -3,44 +3,137 @@ import { X, Upload } from 'lucide-react';
 
 const BookModal = ({ book, isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    id: '',
     title: '',
     author: '',
     isbn: '',
     category: '',
     description: '',
-    price: 0,
-    originalPrice: 0,
-    stock: 0,
-    status: 'in-stock',
-    coverImage: '',
-    discount: 0,
+    price: '',
+    originalPrice: '',
+    discount: '',
+    stock: '',
+    status: 'In Stock',
     publisher: '',
     publishDate: '',
     language: 'English',
-    pages: 0,
-    weight: 0,
-    dimensions: '',
-    tags: []
+    pages: '',
+    image: null
   });
+  
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (book) {
-      setFormData({ ...book });
+      // Convert null values to empty strings for form fields
+      const bookData = { ...book };
+      Object.keys(bookData).forEach(key => {
+        if (bookData[key] === null && key !== 'image') {
+          bookData[key] = '';
+        }
+      });
+      
+      setFormData(bookData);
+      
+      // Set image preview if book has an image
+      if (book.image) {
+        setImagePreview(`https://backend-lzb7.onrender.com${book.image}`);
+      } else {
+        setImagePreview(null);
+      }
     }
   }, [book]);
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'number' ? parseFloat(value) : value
-    });
+    
+    if (type === 'file') {
+      const file = e.target.files[0];
+      setFormData({
+        ...formData,
+        [name]: file
+      });
+      
+      // Create image preview
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImagePreview(null);
+      }
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    setIsSubmitting(true);
+    setError('');
+    
+    try {
+      // Create a FormData object to handle multipart/form-data
+      const submitFormData = new FormData();
+      
+      // Add all text fields to the FormData object
+      Object.keys(formData).forEach(key => {
+        if (key !== 'image') {
+          submitFormData.append(key, formData[key]);
+        }
+      });
+      
+      // Add image file if it exists
+      if (formData.image instanceof File) {
+        submitFormData.append('image', formData.image);
+      }
+      
+      // Get token from localStorage
+      const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        throw new Error('Authentication token is required');
+      }
+      
+      // Create new book or update existing one
+      let url = 'https://backend-lzb7.onrender.com/api/admin/books';
+      let method = 'POST';
+      
+      if (formData._id) {
+        url = `${url}/${formData._id}`;
+        method = 'PUT';
+      }
+      
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Don't set Content-Type header, the browser will set it correctly with the boundary for multipart/form-data
+        },
+        body: submitFormData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to save book: ${response.status} ${response.statusText}`);
+      }
+      
+      // Return the response data to the parent component
+      const responseData = await response.json();
+      onSave(responseData);
+      
+      setIsSubmitting(false);
+    } catch (err) {
+      console.error('Error saving book:', err);
+      setError(err.message);
+      setIsSubmitting(false);
+    }
   };
 
   const categories = [
@@ -55,7 +148,16 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
     'Romance',
     'Science Fiction',
     'Self-Help',
-    'Business'
+    'Business',
+    'Social Studies',
+    'Mathematics'
+  ];
+
+  const statusOptions = [
+    'In Stock',
+    'Low Stock',
+    'Out of Stock',
+    'Discontinued'
   ];
 
   if (!isOpen) return null;
@@ -85,6 +187,12 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
               <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                 {book ? 'Edit Book' : 'Add New Book'}
               </h3>
+
+              {error && (
+                <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -135,11 +243,12 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
 
                   <div>
                     <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                      Category
+                      Category *
                     </label>
                     <select
                       id="category"
                       name="category"
+                      required
                       value={formData.category}
                       onChange={handleChange}
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -172,44 +281,83 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
                       <label htmlFor="price" className="block text-sm font-medium text-gray-700">
                         Price *
                       </label>
-                      <div className="mt-1 relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <span className="text-gray-500 sm:text-sm">$</span>
-                        </div>
-                        <input
-                          type="number"
-                          name="price"
-                          id="price"
-                          required
-                          min="0"
-                          step="0.01"
-                          value={formData.price}
-                          onChange={handleChange}
-                          className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        name="price"
+                        id="price"
+                        required
+                        min="0"
+                        value={formData.price}
+                        onChange={handleChange}
+                        className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
                     </div>
 
                     <div>
                       <label htmlFor="originalPrice" className="block text-sm font-medium text-gray-700">
                         Original Price
                       </label>
-                      <div className="mt-1 relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <span className="text-gray-500 sm:text-sm">$</span>
+                      <input
+                        type="number"
+                        name="originalPrice"
+                        id="originalPrice"
+                        min="0"
+                        value={formData.originalPrice || ''}
+                        onChange={handleChange}
+                        className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="image" className="block text-sm font-medium text-gray-700">
+                      Cover Image
+                    </label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                      {imagePreview ? (
+                        <div className="space-y-1 text-center">
+                          <img
+                            src={imagePreview}
+                            alt="Book cover preview"
+                            className="mx-auto h-32 w-auto object-cover"
+                          />
+                          <div className="flex text-sm text-gray-600 justify-center">
+                            <button
+                              type="button"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
+                              onClick={() => {
+                                setFormData({ ...formData, image: null });
+                                setImagePreview(null);
+                              }}
+                            >
+                              Remove image
+                            </button>
+                          </div>
                         </div>
-                        <input
-                          type="number"
-                          name="originalPrice"
-                          id="originalPrice"
-                          min="0"
-                          step="0.01"
-                          value={formData.originalPrice || ''}
-                          onChange={handleChange}
-                          className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-3 sm:text-sm border-gray-300 rounded-md"
-                          placeholder="If on sale"
-                        />
-                      </div>
+                      ) : (
+                        <div className="space-y-1 text-center">
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex text-sm text-gray-600 justify-center">
+                            <label
+                              htmlFor="image-upload"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
+                            >
+                              <span>Upload a file</span>
+                              <input
+                                id="image-upload"
+                                name="image"
+                                type="file"
+                                className="sr-only"
+                                accept="image/*"
+                                onChange={handleChange}
+                              />
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG up to 2MB</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -232,74 +380,17 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
 
                     <div>
                       <label htmlFor="discount" className="block text-sm font-medium text-gray-700">
-                        Discount (%)
+                        Discount
                       </label>
                       <input
                         type="number"
                         name="discount"
                         id="discount"
                         min="0"
-                        max="100"
-                        value={formData.discount}
+                        value={formData.discount || ''}
                         onChange={handleChange}
                         className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">
-                      Cover Image
-                    </label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                      {formData.coverImage ? (
-                        <div className="space-y-1 text-center">
-                          <img
-                            src={formData.coverImage}
-                            alt="Book cover preview"
-                            className="mx-auto h-32 w-auto object-cover"
-                          />
-                          <div className="flex text-sm text-gray-600">
-                            <button
-                              type="button"
-                              className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
-                              onClick={() => setFormData({ ...formData, coverImage: '' })}
-                            >
-                              Remove image
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-1 text-center">
-                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                          <div className="flex text-sm text-gray-600">
-                            <label
-                              htmlFor="file-upload"
-                              className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
-                            >
-                              <span>Upload a file</span>
-                              <input
-                                id="file-upload"
-                                name="file-upload"
-                                type="file"
-                                className="sr-only"
-                                onChange={() => {
-                                  // In a real app, this would handle file upload
-                                  // For this demo, setting a placeholder
-                                  setFormData({
-                                    ...formData,
-                                    coverImage: '/api/placeholder/200/300'
-                                  });
-                                }}
-                              />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
-                          </div>
-                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -314,10 +405,11 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
                       onChange={handleChange}
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
-                      <option value="in-stock">In Stock</option>
-                      <option value="low-stock">Low Stock</option>
-                      <option value="out-of-stock">Out of Stock</option>
-                      <option value="discontinued">Discontinued</option>
+                      {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -329,27 +421,27 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
                       type="text"
                       name="publisher"
                       id="publisher"
-                      value={formData.publisher}
-                      onChange={handleChange}
-                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="publishDate" className="block text-sm font-medium text-gray-700">
-                      Publish Date
-                    </label>
-                    <input
-                      type="date"
-                      name="publishDate"
-                      id="publishDate"
-                      value={formData.publishDate}
+                      value={formData.publisher || ''}
                       onChange={handleChange}
                       className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="publishDate" className="block text-sm font-medium text-gray-700">
+                        Publish Date
+                      </label>
+                      <input
+                        type="date"
+                        name="publishDate"
+                        id="publishDate"
+                        value={formData.publishDate ? formData.publishDate.slice(0, 10) : ''}
+                        onChange={handleChange}
+                        className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      />
+                    </div>
+
                     <div>
                       <label htmlFor="language" className="block text-sm font-medium text-gray-700">
                         Language
@@ -358,26 +450,26 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
                         type="text"
                         name="language"
                         id="language"
-                        value={formData.language}
+                        value={formData.language || ''}
                         onChange={handleChange}
                         className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       />
                     </div>
+                  </div>
 
-                    <div>
-                      <label htmlFor="pages" className="block text-sm font-medium text-gray-700">
-                        Pages
-                      </label>
-                      <input
-                        type="number"
-                        name="pages"
-                        id="pages"
-                        min="0"
-                        value={formData.pages}
-                        onChange={handleChange}
-                        className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      />
-                    </div>
+                  <div>
+                    <label htmlFor="pages" className="block text-sm font-medium text-gray-700">
+                      Pages
+                    </label>
+                    <input
+                      type="number"
+                      name="pages"
+                      id="pages"
+                      min="0"
+                      value={formData.pages || ''}
+                      onChange={handleChange}
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                    />
                   </div>
                 </div>
               </div>
@@ -386,14 +478,16 @@ const BookModal = ({ book, isOpen, onClose, onSave }) => {
             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button
                 type="submit"
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                disabled={isSubmitting}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-300"
               >
-                {book ? 'Save Changes' : 'Add Book'}
+                {isSubmitting ? 'Saving...' : book ? 'Save Changes' : 'Add Book'}
               </button>
               <button
                 type="button"
                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 onClick={onClose}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>

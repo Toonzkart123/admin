@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusCircle, Search, MapPin, Phone, Mail, Store, ChevronRight } from 'lucide-react';
-import { mockStores } from '../data/storeMockData';
 import { getStatusBadgeClass } from './StoreDetails';
+import axios from 'axios';
+
+const API_BASE_URL = 'https://backend-lzb7.onrender.com';
 
 const Stores = () => {
   const navigate = useNavigate();
@@ -15,12 +17,25 @@ const Stores = () => {
 
   // Load stores
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setStores(mockStores);
-      setFilteredStores(mockStores);
-      setIsLoading(false);
-    }, 500);
+    const fetchStores = async () => {
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem('adminToken'); // Assuming you store the token in localStorage
+        const response = await axios.get(`${API_BASE_URL}/api/admin/stores`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setStores(response.data);
+        setFilteredStores(response.data);
+      } catch (error) {
+        console.error('Error fetching stores:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStores();
   }, []);
 
   // Handle search and filtering
@@ -31,15 +46,15 @@ const Stores = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(store => 
-        store.name.toLowerCase().includes(query) || 
-        store.address.toLowerCase().includes(query) ||
-        store.manager.toLowerCase().includes(query)
+        store.storeName?.toLowerCase().includes(query) || 
+        store.address?.toLowerCase().includes(query) ||
+        store.managerName?.toLowerCase().includes(query)
       );
     }
     
     // Apply status filter
     if (statusFilter !== 'all') {
-      results = results.filter(store => store.status.toLowerCase() === statusFilter);
+      results = results.filter(store => store.status?.toLowerCase() === statusFilter);
     }
     
     setFilteredStores(results);
@@ -132,9 +147,9 @@ const StoreGrid = ({ stores, handleStoreClick }) => {
       {stores.length > 0 ? (
         stores.map((store) => (
           <StoreCard 
-            key={store.id} 
+            key={store._id} 
             store={store} 
-            onClick={() => handleStoreClick(store.id)} 
+            onClick={() => handleStoreClick(store._id)} 
           />
         ))
       ) : (
@@ -148,16 +163,20 @@ const StoreGrid = ({ stores, handleStoreClick }) => {
 };
 
 const StoreCard = ({ store, onClick }) => {
+  const imageUrl = store.image 
+    ? `${API_BASE_URL}/${store.image}` 
+    : null;
+    
   return (
     <div 
       className="bg-white rounded-lg shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
       onClick={onClick}
     >
       <div className="h-40 bg-gray-200">
-        {store.image ? (
+        {imageUrl ? (
           <img 
-            src={store.image} 
-            alt={store.name} 
+            src={imageUrl} 
+            alt={store.storeName} 
             className="w-full h-full object-cover"
           />
         ) : (
@@ -168,7 +187,7 @@ const StoreCard = ({ store, onClick }) => {
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-semibold text-gray-900">{store.name}</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{store.storeName}</h3>
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(store.status)}`}>
             {store.status}
           </span>
@@ -179,7 +198,7 @@ const StoreCard = ({ store, onClick }) => {
         </p>
         <p className="text-sm text-gray-500 mt-1 flex items-center">
           <Phone size={14} className="mr-1 flex-shrink-0" />
-          {store.phone}
+          {store.phoneNumber}
         </p>
         <p className="text-sm text-gray-500 mt-1 flex items-center">
           <Mail size={14} className="mr-1 flex-shrink-0" />
@@ -187,11 +206,11 @@ const StoreCard = ({ store, onClick }) => {
         </p>
         <div className="mt-4 flex justify-between text-sm">
           <div>
-            <p className="font-medium text-gray-900">{store.activeListings}</p>
+            <p className="font-medium text-gray-900">{store.inventory?.length || 0}</p>
             <p className="text-gray-500">Active Items</p>
           </div>
           <div>
-            <p className="font-medium text-gray-900">{store.totalInventory}</p>
+            <p className="font-medium text-gray-900">{store.inventory?.length || 0}</p>
             <p className="text-gray-500">Total Inventory</p>
           </div>
           <div className="flex items-center text-blue-600">

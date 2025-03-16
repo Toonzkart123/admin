@@ -4,7 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   BookOpen, ShoppingCart, Users, DollarSign, Tag, 
   Star, BarChart2, Search, Shield, Settings, 
-  ChevronDown, Home, Menu, X, Store, LogOut
+  ChevronDown, Home, Menu, X, Store, LogOut,
+  GraduationCap
 } from 'lucide-react';
 
 const navItems = [
@@ -13,13 +14,14 @@ const navItems = [
   { title: 'Orders', icon: <ShoppingCart />, path: '/orders' },
   { title: 'Users', icon: <Users />, path: '/users' },
   { title: 'Stores', icon: <Store />, path: '/stores' },
-  { title: 'Financials', icon: <DollarSign />, path: '/financials' },
+  { title: 'Schools', icon: <GraduationCap />, path: '/schools' },
+  // { title: 'Financials', icon: <DollarSign />, path: '/financials' },
   { title: 'Promotions', icon: <Tag />, path: '/promotions' },
   { title: 'Reviews', icon: <Star />, path: '/reviews' },
-  { title: 'Analytics', icon: <BarChart2 />, path: '/analytics' },
-  { title: 'Marketing', icon: <Search />, path: '/marketing' },
-  { title: 'Security', icon: <Shield />, path: '/security' },
-  { title: 'Settings', icon: <Settings />, path: '/settings' },
+  // { title: 'Analytics', icon: <BarChart2 />, path: '/analytics' },
+  // { title: 'Marketing', icon: <Search />, path: '/marketing' },
+  // { title: 'Security', icon: <Shield />, path: '/security' },
+  // { title: 'Settings', icon: <Settings />, path: '/settings' },
 ];
 
 const Sidebar = ({ onToggle }) => {

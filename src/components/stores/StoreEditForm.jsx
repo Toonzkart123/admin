@@ -1,8 +1,33 @@
 // src/components/stores/StoreEditForm.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
 
-const StoreEditForm = ({ formData, setFormData, handleChange }) => {
+const StoreEditForm = ({ formData, setFormData, handleChange, apiBaseUrl }) => {
+  const [imagePreview, setImagePreview] = useState(
+    formData.image ? (formData.image instanceof File ? URL.createObjectURL(formData.image) : formData.image) : ''
+  );
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Create a preview URL for the selected image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      setFormData({
+        ...formData,
+        image: file
+      });
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview('');
+    setFormData({
+      ...formData,
+      image: null
+    });
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -15,8 +40,8 @@ const StoreEditForm = ({ formData, setFormData, handleChange }) => {
             </label>
             <input
               type="text"
-              name="name"
-              value={formData.name || ''}
+              name="storeName"
+              value={formData.storeName || ''}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -44,8 +69,8 @@ const StoreEditForm = ({ formData, setFormData, handleChange }) => {
               </label>
               <input
                 type="tel"
-                name="phone"
-                value={formData.phone || ''}
+                name="phoneNumber"
+                value={formData.phoneNumber || ''}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -73,8 +98,8 @@ const StoreEditForm = ({ formData, setFormData, handleChange }) => {
               </label>
               <input
                 type="text"
-                name="manager"
-                value={formData.manager || ''}
+                name="managerName"
+                value={formData.managerName || ''}
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -134,10 +159,10 @@ const StoreEditForm = ({ formData, setFormData, handleChange }) => {
               Store Image
             </label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-              {formData.image ? (
+              {imagePreview ? (
                 <div className="space-y-1 text-center">
                   <img
-                    src={formData.image}
+                    src={imagePreview}
                     alt="Store preview"
                     className="mx-auto h-32 w-auto object-cover"
                   />
@@ -145,7 +170,7 @@ const StoreEditForm = ({ formData, setFormData, handleChange }) => {
                     <button
                       type="button"
                       className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
-                      onClick={() => setFormData({ ...formData, image: '' })}
+                      onClick={removeImage}
                     >
                       Remove image
                     </button>
@@ -164,14 +189,9 @@ const StoreEditForm = ({ formData, setFormData, handleChange }) => {
                         id="file-upload"
                         name="file-upload"
                         type="file"
+                        accept="image/*"
                         className="sr-only"
-                        onChange={() => {
-                          // For demo purposes, set a placeholder image
-                          setFormData({
-                            ...formData,
-                            image: '/api/placeholder/400/200'
-                          });
-                        }}
+                        onChange={handleImageChange}
                       />
                     </label>
                     <p className="pl-1">or drag and drop</p>
