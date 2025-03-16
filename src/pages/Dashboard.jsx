@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DollarSign, BookOpen, ShoppingCart, Users } from 'lucide-react';
 import StatCard from '../components/modules/dashboard/StatCard';
 import RecentOrdersTable from '../components/modules/dashboard/RecentOrdersTable';
@@ -41,6 +41,16 @@ const mockNotifications = [
 ];
 
 const Dashboard = () => {
+  useEffect(() => {
+    // Log the admin authorization token from localStorage
+    const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}');
+    const adminToken = localStorage.getItem('adminToken');
+    console.log('Admin Authorization Token:', adminToken || adminInfo.token);
+    
+    // Additional logging for debugging
+    console.log('Admin Info:', adminInfo);
+  }, []);
+
   return (
     <div className="w-full p-6 overflow-hidden">
       <div className="mb-6">

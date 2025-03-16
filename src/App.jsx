@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
@@ -12,17 +12,38 @@ import Analytics from './pages/Analytics';
 import Marketing from './pages/Marketing';
 import Security from './pages/Security';
 import Settings from './pages/Settings';
-// import NotFound from './pages/NotFound';
-import './App.css';
 import Stores from './pages/Stores';
 import StoreDetails from './pages/StoreDetails';
+import Login from './pages/Login';
+import './App.css';
+
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem('adminInfo') !== null;
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  return children;
+};
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Routes wrapped by MainLayout */}
-        <Route path="/" element={<MainLayout />}>
+        {/* Public route */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Protected routes wrapped by MainLayout */}
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="orders" element={<Orders />} />
@@ -38,8 +59,8 @@ function App() {
           <Route path="stores/:id" element={<StoreDetails />} />
         </Route>
         
-        {/* 404 route */}
-        {/* <Route path="*" element={<NotFound />} /> */}
+        {/* Redirect any unknown routes to login */}
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>
   );

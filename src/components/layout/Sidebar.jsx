@@ -1,10 +1,10 @@
 // src/components/layout/Sidebar.jsx
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   BookOpen, ShoppingCart, Users, DollarSign, Tag, 
   Star, BarChart2, Search, Shield, Settings, 
-  ChevronDown, Home, Menu, X, Store 
+  ChevronDown, Home, Menu, X, Store, LogOut
 } from 'lucide-react';
 
 const navItems = [
@@ -26,6 +26,7 @@ const Sidebar = ({ onToggle }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     const newCollapsedState = !collapsed;
@@ -37,6 +38,15 @@ const Sidebar = ({ onToggle }) => {
 
   const toggleMobileSidebar = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleLogout = () => {
+    // Clear all admin data from localStorage
+    localStorage.removeItem('adminInfo');
+    localStorage.removeItem('adminToken');
+    
+    // Redirect to login page
+    navigate('/login');
   };
 
   return (
@@ -95,8 +105,8 @@ const Sidebar = ({ onToggle }) => {
           </div>
         )}
 
-        <nav className="py-4">
-          <ul className="space-y-1 px-2">
+        <nav className="py-4 flex flex-col h-[calc(100%-4rem)]">
+          <ul className="space-y-1 px-2 flex-grow">
             {navItems.map((item) => (
               <li key={item.path}>
                 <Link
@@ -114,6 +124,19 @@ const Sidebar = ({ onToggle }) => {
               </li>
             ))}
           </ul>
+          
+          {/* Logout button */}
+          <div className="px-2 pb-4 mt-auto">
+            <button
+              onClick={handleLogout}
+              className={`w-full flex items-center p-3 rounded-lg transition-colors
+                text-red-600 hover:bg-red-50
+                ${collapsed ? 'justify-center' : ''}`}
+            >
+              <span className="text-xl"><LogOut /></span>
+              {!collapsed && <span className="ml-3">Logout</span>}
+            </button>
+          </div>
         </nav>
       </div>
     </>
