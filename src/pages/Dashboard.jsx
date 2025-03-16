@@ -1,18 +1,11 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { DollarSign, BookOpen, ShoppingCart, Users } from 'lucide-react';
 import StatCard from '../components/modules/dashboard/StatCard';
 import RecentOrdersTable from '../components/modules/dashboard/RecentOrdersTable';
 import NotificationsPanel from '../components/modules/dashboard/NotificationsPanel';
 
-// Mock data
-const mockOrders = [
-  { id: '1001', customer: 'John Doe', date: '2025-03-09', amount: 129.99, status: 'Completed' },
-  { id: '1002', customer: 'Jane Smith', date: '2025-03-09', amount: 89.95, status: 'Processing' },
-  { id: '1003', customer: 'Robert Johnson', date: '2025-03-08', amount: 59.99, status: 'Pending' },
-  { id: '1004', customer: 'Emily Brown', date: '2025-03-08', amount: 149.95, status: 'Cancelled' },
-  { id: '1005', customer: 'Michael Wilson', date: '2025-03-07', amount: 39.99, status: 'Completed' },
-];
-
+// Mock notifications data remains unchanged
 const mockNotifications = [
   { 
     id: 1, 
@@ -41,6 +34,11 @@ const mockNotifications = [
 ];
 
 const Dashboard = () => {
+  // Add state for orders
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     // Log the admin authorization token from localStorage
     const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}');
@@ -49,6 +47,64 @@ const Dashboard = () => {
     
     // Additional logging for debugging
     console.log('Admin Info:', adminInfo);
+
+    // Fetch orders from API
+    const fetchOrders = async () => {
+      try {
+        // Get the token from localStorage
+        const token = adminToken || adminInfo.token;
+        
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+
+        const response = await fetch('https://backend-lzb7.onrender.com/api/admin/orders', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Transform the API response to match the expected format for RecentOrdersTable
+        // Adjust this mapping based on your actual API response structure
+        const formattedOrders = data.map(order => ({
+          id: order._id || order.orderId || order.id,
+          customer: order.user?.name || order.customerName || 'Unknown Customer',
+          date: new Date(order.createdAt).toISOString().split('T')[0],
+          amount: order.totalAmount || order.totalPrice || 0,
+          status: order.status || 'Processing'
+        }));
+
+        // Sort orders by date (newest first) and take only the 5 most recent
+        const sortedOrders = formattedOrders.sort((a, b) => {
+          return new Date(b.date) - new Date(a.date);
+        });
+        setOrders(sortedOrders.slice(0, 4));
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError(err.message);
+        setLoading(false);
+        
+        // Fallback to mock data if API fails
+        setOrders([
+          { id: '1001', customer: 'John Doe', date: '2025-03-09', amount: 129.99, status: 'Completed' },
+          { id: '1002', customer: 'Jane Smith', date: '2025-03-09', amount: 89.95, status: 'Processing' },
+          { id: '1003', customer: 'Robert Johnson', date: '2025-03-08', amount: 59.99, status: 'Pending' },
+          { id: '1004', customer: 'Emily Brown', date: '2025-03-08', amount: 149.95, status: 'Cancelled' },
+          { id: '1005', customer: 'Michael Wilson', date: '2025-03-07', amount: 39.99, status: 'Completed' },
+        ]);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
   return (
@@ -91,7 +147,17 @@ const Dashboard = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <RecentOrdersTable orders={mockOrders} />
+          {loading ? (
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-center text-gray-500">Loading orders...</p>
+            </div>
+          ) : error ? (
+            <div className="p-4 bg-white rounded-lg shadow">
+              <p className="text-center text-red-500">Error loading orders: {error}</p>
+            </div>
+          ) : (
+            <RecentOrdersTable orders={orders} />
+          )}
         </div>
         <div>
           <NotificationsPanel notifications={mockNotifications} />
