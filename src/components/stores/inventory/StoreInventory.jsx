@@ -3,32 +3,97 @@ import React, { useState, useEffect } from 'react';
 import { PlusCircle, Book } from 'lucide-react';
 import { getInventoryStatusClass } from '../../../pages/StoreDetails';
 import axios from 'axios';
+import BookModalStores from './BookModalStores';
 
 const StoreInventory = ({ inventory = [], storeId, apiBaseUrl }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [books, setBooks] = useState(inventory || []);
+  const [inventoryItems, setInventoryItems] = useState(inventory || []);
+  const [books, setBooks] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
-    setBooks(inventory || []);
+    setInventoryItems(inventory || []);
+    
+    // Fetch book details when inventory changes
+    if (inventory && inventory.length > 0) {
+      fetchBookDetails(inventory);
+    }
   }, [inventory]);
+
+  // Add a new useEffect to fetch the store when component mounts
+  useEffect(() => {
+    if (storeId) {
+      fetchInventory();
+    }
+  }, [storeId]);
 
   const handleAddBook = () => {
     setShowAddModal(true);
   };
 
+  // Fetch details for each book ID in the inventory array
+  const fetchBookDetails = async (inventoryItems) => {
+    if (!inventoryItems || inventoryItems.length === 0) {
+      setBooks([]);
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('Authentication token is required');
+      }
+
+      // Fetch details for each book in the inventory
+      const bookDetailsPromises = inventoryItems.map(item => 
+        axios.get(`${apiBaseUrl}/api/admin/books/${item.book}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+      );
+
+      const responses = await Promise.all(bookDetailsPromises);
+      
+      // Combine book details with inventory stock information
+      const booksWithStock = responses.map((response, index) => {
+        return {
+          ...response.data,
+          inventoryId: inventoryItems[index]._id,
+          stock: inventoryItems[index].stock
+        };
+      });
+      
+      setBooks(booksWithStock);
+    } catch (error) {
+      console.error('Error fetching book details:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch the latest store inventory
   const fetchInventory = async () => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('Authentication token is required');
+      }
+
       const response = await axios.get(`${apiBaseUrl}/api/admin/stores/${storeId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
-      if (response.data.inventory) {
-        setBooks(response.data.inventory);
+      console.log("Store response:", response.data);
+      
+      // If the store has an inventory array, update state and fetch book details
+      if (response.data.inventory && Array.isArray(response.data.inventory)) {
+        setInventoryItems(response.data.inventory);
+        await fetchBookDetails(response.data.inventory);
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -37,14 +102,14 @@ const StoreInventory = ({ inventory = [], storeId, apiBaseUrl }) => {
     }
   };
 
-  const handleRemoveBook = async (bookId) => {
+  const handleRemoveBook = async (inventoryId) => {
     if (window.confirm('Are you sure you want to remove this book from inventory?')) {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('adminToken');
         
         // Replace with your actual API endpoint for removing books from inventory
-        await axios.delete(`${apiBaseUrl}/api/admin/stores/${storeId}/inventory/${bookId}`, {
+        await axios.delete(`${apiBaseUrl}/api/admin/stores/${storeId}/inventory/${inventoryId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -59,6 +124,40 @@ const StoreInventory = ({ inventory = [], storeId, apiBaseUrl }) => {
         setIsLoading(false);
       }
     }
+  };
+
+  const handleUpdateStock = async (inventoryId, newStock) => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('adminToken');
+      
+      await axios.put(`${apiBaseUrl}/api/admin/stores/${storeId}/inventory/${inventoryId}`, 
+        { stock: newStock },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Refresh inventory after updating stock
+      fetchInventory();
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      alert('Failed to update stock');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveBook = async (data) => {
+    // The book was saved and added to the store's inventory
+    console.log('Book added to inventory:', data);
+    setShowAddModal(false);
+    
+    // Refresh the inventory
+    fetchInventory();
   };
 
   return (
@@ -80,40 +179,42 @@ const StoreInventory = ({ inventory = [], storeId, apiBaseUrl }) => {
           <p className="text-gray-500">Loading inventory...</p>
         </div>
       ) : books.length > 0 ? (
-        <InventoryTable inventory={books} onRemoveBook={handleRemoveBook} />
+        <InventoryTable 
+          inventory={books} 
+          onRemoveBook={handleRemoveBook} 
+          onUpdateStock={handleUpdateStock}
+        />
       ) : (
         <EmptyInventory onAddBook={handleAddBook} />
       )}
 
-      {/* TODO: Implement Add Book Modal */}
+      {/* Book Modal for adding new books to inventory */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">Add Book to Inventory</h2>
-            <p className="text-gray-500 mb-4">
-              This feature is coming soon. You'll be able to add books to this store's inventory.
-            </p>
-            <div className="flex justify-end">
-              <button
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-                onClick={() => setShowAddModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <BookModalStores 
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSave={handleSaveBook}
+          storeId={storeId}
+          apiBaseUrl={apiBaseUrl}
+        />
       )}
     </div>
   );
 };
 
-const InventoryTable = ({ inventory, onRemoveBook }) => {
+const InventoryTable = ({ inventory, onRemoveBook, onUpdateStock }) => {
   // Helper function to format book status based on quantity
   const getBookStatus = (quantity) => {
     if (quantity <= 0) return "Out of Stock";
     if (quantity < 5) return "Low Stock";
     return "In Stock";
+  };
+
+  const handleStockChange = (e, inventoryId) => {
+    const newStock = parseInt(e.target.value) || 0;
+    if (newStock >= 0) {
+      onUpdateStock(inventoryId, newStock);
+    }
   };
 
   return (
@@ -137,7 +238,7 @@ const InventoryTable = ({ inventory, onRemoveBook }) => {
               Price
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Quantity
+              Stock
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
@@ -149,7 +250,7 @@ const InventoryTable = ({ inventory, onRemoveBook }) => {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {inventory.map((item) => {
-            const status = getBookStatus(item.quantity || 0);
+            const status = getBookStatus(item.stock || 0);
             
             return (
               <tr key={item._id} className="hover:bg-gray-50">
@@ -169,7 +270,13 @@ const InventoryTable = ({ inventory, onRemoveBook }) => {
                   ${item.price ? item.price.toFixed(2) : '0.00'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {item.quantity || 0}
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-16 rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    value={item.stock || 0}
+                    onChange={(e) => handleStockChange(e, item.inventoryId)}
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getInventoryStatusClass(status)}`}>
@@ -182,7 +289,7 @@ const InventoryTable = ({ inventory, onRemoveBook }) => {
                   </button>
                   <button 
                     className="text-red-500 hover:text-red-700 transition duration-150"
-                    onClick={() => onRemoveBook(item._id)}
+                    onClick={() => onRemoveBook(item.inventoryId)}
                   >
                     Remove
                   </button>

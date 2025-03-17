@@ -1,16 +1,16 @@
-// src/components/layout/Sidebar.jsx
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   BookOpen, ShoppingCart, Users, DollarSign, Tag, 
   Star, BarChart2, Search, Shield, Settings, 
   ChevronDown, Home, Menu, X, Store, LogOut,
-  GraduationCap
+  GraduationCap, ShoppingBag
 } from 'lucide-react';
 
 const navItems = [
   { title: 'Dashboard', icon: <Home />, path: '/' },
   { title: 'Inventory', icon: <BookOpen />, path: '/inventory' },
+  { title: 'Shop On Demand', icon: <ShoppingBag />, path: '/shop-on-demand' },
   { title: 'Orders', icon: <ShoppingCart />, path: '/orders' },
   { title: 'Users', icon: <Users />, path: '/users' },
   { title: 'Stores', icon: <Store />, path: '/stores' },

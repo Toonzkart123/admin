@@ -17,6 +17,7 @@ import StoreDetails from './pages/StoreDetails';
 import Login from './pages/Login';
 import './App.css';
 import Schools from './pages/Schools';
+import ShopOnDemand from './pages/ShopOnDemand';
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +60,7 @@ function App() {
           <Route path="stores" element={<Stores />} />
           <Route path="stores/:id" element={<StoreDetails />} />
           <Route path="schools" element={<Schools />} />
+          <Route path="shop-on-demand" element={<ShopOnDemand />} />
         </Route>
         
         {/* Redirect any unknown routes to login */}
