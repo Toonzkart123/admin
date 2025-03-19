@@ -250,6 +250,7 @@ const InventoryTable = ({ inventory, onRemoveBook, onUpdateStock }) => {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {inventory.map((item) => {
+            console.log(item);
             const status = getBookStatus(item.stock || 0);
             
             return (
