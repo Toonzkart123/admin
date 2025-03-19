@@ -184,7 +184,7 @@ const Stationery = () => {
         image: formData.image || undefined,
         // Determine status based on stock
         status: parseInt(formData.stock) <= 0 ? 'Out of Stock' : 
-                parseInt(formData.stock) < 20 ? 'Low Stock' : 'In Stock'
+                parseInt(formData.stock) >= 1 ? 'In Stock' : 'Out of Stock'
       };
 
       if (currentItem) {
