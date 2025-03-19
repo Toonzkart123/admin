@@ -61,7 +61,7 @@ const StoreInventory = ({ inventory = [], storeId, apiBaseUrl }) => {
         return {
           ...response.data,
           inventoryId: inventoryItems[index]._id,
-          stock: inventoryItems[index].stock
+          // stock: inventoryItems[index].stock
         };
       });
       
