@@ -4,12 +4,13 @@ import {
   BookOpen, ShoppingCart, Users, DollarSign, Tag, 
   Star, BarChart2, Search, Shield, Settings, 
   ChevronDown, Home, Menu, X, Store, LogOut,
-  GraduationCap, ShoppingBag
+  GraduationCap, ShoppingBag, PenTool
 } from 'lucide-react';
 
 const navItems = [
   { title: 'Dashboard', icon: <Home />, path: '/' },
   { title: 'Inventory', icon: <BookOpen />, path: '/inventory' },
+  { title: 'Stationery', icon: <PenTool />, path: '/stationery' },
   { title: 'Shop On Demand', icon: <ShoppingBag />, path: '/shop-on-demand' },
   { title: 'Orders', icon: <ShoppingCart />, path: '/orders' },
   { title: 'Users', icon: <Users />, path: '/users' },
