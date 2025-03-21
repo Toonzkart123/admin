@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Edit, Trash2, Filter, Download, Upload, 
   Search, ChevronDown, CheckCircle, Pencil, PenTool,
-  Info, Package, DollarSign, Tag, AlertCircle
+  Info, Package, DollarSign, Tag, AlertCircle, Image as ImageIcon
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -37,8 +37,16 @@ const Stationery = () => {
     price: '',
     stock: '',
     description: '',
-    image: ''
+    image: null,
+    imagePreview: ''
   });
+
+  // File input reference
+  const fileInputRef = useRef(null);
+  
+  // Upload status
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Load stationery items
   useEffect(() => {
@@ -115,6 +123,23 @@ const Stationery = () => {
   const currentItems = sortedItems.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(sortedItems.length / itemsPerPage);
 
+  // Handle file change
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Preview image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          image: file,
+          imagePreview: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Handle adding new item
   const handleAddItem = () => {
     setCurrentItem(null);
@@ -125,7 +150,8 @@ const Stationery = () => {
       price: '',
       stock: '',
       description: '',
-      image: ''
+      image: null,
+      imagePreview: ''
     });
     setIsModalOpen(true);
   };
@@ -140,7 +166,8 @@ const Stationery = () => {
       price: item.price?.toString() || '',
       stock: item.stock?.toString() || '',
       description: item.description || '',
-      image: item.image || ''
+      image: null,
+      imagePreview: item.image || ''
     });
     setIsModalOpen(true);
   };
@@ -154,7 +181,7 @@ const Stationery = () => {
     }));
   };
 
-  // Handle form submission
+  // Handle form submission with multipart/form-data
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -165,58 +192,76 @@ const Stationery = () => {
     }
 
     try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
       // Get authentication token
       const token = localStorage.getItem('adminToken');
       
       if (!token) {
         setError('Authentication required. Please log in again.');
+        setIsUploading(false);
         return;
       }
 
-      // Create item data
-      const itemData = {
-        name: formData.name,
-        category: formData.category,
-        brand: formData.brand || undefined,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
-        description: formData.description || undefined,
-        image: formData.image || undefined,
-        // Determine status based on stock
-        status: parseInt(formData.stock) <= 0 ? 'Out of Stock' : 
-                parseInt(formData.stock) >= 1 ? 'In Stock' : 'Out of Stock'
+      // Create FormData object for multipart/form-data
+      const multipartFormData = new FormData();
+      multipartFormData.append('name', formData.name);
+      multipartFormData.append('category', formData.category);
+      
+      if (formData.brand) {
+        multipartFormData.append('brand', formData.brand);
+      }
+      
+      multipartFormData.append('price', parseFloat(formData.price));
+      multipartFormData.append('stock', parseInt(formData.stock));
+      
+      if (formData.description) {
+        multipartFormData.append('description', formData.description);
+      }
+      
+      // Add status based on stock
+      const status = parseInt(formData.stock) <= 0 ? 'Out of Stock' : 'In Stock';
+      multipartFormData.append('status', status);
+      
+      // If there's a new image file, append it
+      if (formData.image instanceof File) {
+        multipartFormData.append('image', formData.image);
+      } else if (formData.imagePreview && formData.imagePreview.startsWith('http')) {
+        // If using existing image URL from server
+        multipartFormData.append('imageUrl', formData.imagePreview);
+      }
+
+      // Configure axios with progress tracking
+      const axiosConfig = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       };
 
       if (currentItem) {
         // Update existing item
-        await axios.put(
+        const response = await axios.put(
           `${API_BASE_URL}/api/admin/stationery/${currentItem._id}`, 
-          itemData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
+          multipartFormData,
+          axiosConfig
         );
         
         // Update local state
         setStationeryItems(prev => 
-          prev.map(item => item._id === currentItem._id ? 
-            { ...item, ...itemData } : item
-          )
+          prev.map(item => item._id === currentItem._id ? response.data : item)
         );
       } else {
         // Add new item
         const response = await axios.post(
           `${API_BASE_URL}/api/admin/stationery`, 
-          itemData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
+          multipartFormData,
+          axiosConfig
         );
         
         // Add to local state
@@ -230,6 +275,8 @@ const Stationery = () => {
     } catch (err) {
       console.error('Error saving stationery item:', err);
       alert(err.response?.data?.message || 'Failed to save item. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -398,8 +445,21 @@ const Stationery = () => {
                     <tr key={item._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 mr-3">
-                            <Pencil size={18} />
+                          <div className="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 mr-3 overflow-hidden">
+                            {item.image ? (
+                              <img 
+                                src={item.image} 
+                                alt={item.name} 
+                                className="h-full w-full object-cover" 
+                                onError={(e) => {
+                                  e.target.onError = null;
+                                  e.target.src = "";
+                                  e.target.parentNode.innerHTML = '<span class="text-gray-400"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 8h.5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2h.5"/><path d="M8 7V3.5a2.5 2.5 0 0 1 5 0V7"/><path d="M6 10h12"/><path d="M11 14h2"/></svg></span>';
+                                }}
+                              />
+                            ) : (
+                              <Pencil size={18} />
+                            )}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">{item.name}</div>
@@ -602,6 +662,43 @@ const Stationery = () => {
                       rows={3}
                     />
                   </div>
+
+                  {/* Product Image Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Image
+                    </label>
+                    <div className="mt-1 flex items-center">
+                      <div 
+                        onClick={() => fileInputRef.current.click()}
+                        className="relative cursor-pointer bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors"
+                      >
+                        {formData.imagePreview ? (
+                          <>
+                            <img 
+                              src={formData.imagePreview} 
+                              alt="Product preview" 
+                              className="h-32 w-32 object-contain mb-3"
+                            />
+                            <p className="text-xs text-blue-600">Click to change</p>
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon size={36} className="text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-500">Upload image</p>
+                            <p className="text-xs text-gray-400 mt-1">Click to browse</p>
+                          </>
+                        )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="space-y-4">
@@ -627,7 +724,7 @@ const Stationery = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                       Stock Quantity <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -641,26 +738,29 @@ const Stationery = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Image URL
-                    </label>
-                    <input
-                      type="text"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
-                      className="border rounded-lg px-3 py-2 w-full"
-                      placeholder="image.jpg"
-                    />
-                  </div>
+                  {/* Upload Progress */}
+                  {isUploading && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Upload Progress
+                      </label>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-blue-600 h-2.5 rounded-full" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 text-right">{uploadProgress}% Complete</p>
+                    </div>
+                  )}
                   
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
                     <div className="flex items-start">
                       <Info size={16} className="text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
                       <div className="text-sm text-blue-800">
-                        <p className="font-medium">Inventory Note:</p>
-                        <p>Items with stock below 20 will be marked as "Low Stock".</p>
+                        <p className="font-medium">Multipart Form Data:</p>
+                        <p>This form now uses multipart/form-data which supports file uploads.</p>
+                        <p className="mt-1">Items with stock below 20 will be marked as "Low Stock".</p>
                       </div>
                     </div>
                   </div>
@@ -672,13 +772,18 @@ const Stationery = () => {
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  disabled={isUploading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  disabled={isUploading}
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
+                  {isUploading && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  )}
                   {currentItem ? 'Update Item' : 'Add Item'}
                 </button>
               </div>
