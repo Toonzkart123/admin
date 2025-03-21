@@ -75,6 +75,7 @@ const Dashboard = () => {
         // Transform the API response to match the expected format for RecentOrdersTable
         // Adjust this mapping based on your actual API response structure
         const formattedOrders = data.map(order => ({
+          orderId: order.orderId,
           id: order._id || order.orderId || order.id,
           customer: order.user?.name || order.customerName || 'Unknown Customer',
           date: new Date(order.createdAt).toISOString().split('T')[0],

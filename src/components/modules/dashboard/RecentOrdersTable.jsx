@@ -1,8 +1,7 @@
-// src/components/RecentOrdersTable.jsx
 import React, { useState, useEffect } from 'react';
-import OrderDetailsModal from '../../OrderDetailsModal'; // Fixed import path
+import OrderDetailsModal from '../../../components/OrderDetailsModal';
 
-const RecentOrdersTable = ({ orders }) => {
+const RecentOrdersTable = ({ orders, onViewAllOrders }) => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +22,7 @@ const RecentOrdersTable = ({ orders }) => {
     setError(null);
     
     try {
-      // Get the token from localStorage
+      // Get the token from localStorage - check multiple possible storage locations
       const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}');
       const adminToken = localStorage.getItem('adminToken');
       const token = adminToken || adminInfo.token;
@@ -31,8 +30,6 @@ const RecentOrdersTable = ({ orders }) => {
       if (!token) {
         throw new Error('Authentication token not found');
       }
-
-      console.log('Fetching order details for ID:', orderId);
 
       const response = await fetch(`https://backend-lzb7.onrender.com/api/admin/orders/${orderId}`, {
         method: 'GET',
@@ -47,7 +44,7 @@ const RecentOrdersTable = ({ orders }) => {
       }
 
       const data = await response.json();
-      console.log('Order details received:', data);
+      
       setOrderDetails(data);
     } catch (err) {
       console.error('Error fetching order details:', err);
@@ -58,15 +55,11 @@ const RecentOrdersTable = ({ orders }) => {
   };
 
   const handleViewOrder = (orderId) => {
-    console.log('View order clicked:', orderId);
     setSelectedOrderId(orderId);
-    // fetchOrderDetails is now called by the useEffect
   };
 
   const handleEditOrder = (orderId) => {
-    console.log('Edit order clicked:', orderId);
     setSelectedOrderId(orderId);
-    // fetchOrderDetails is now called by the useEffect
   };
 
   const getStatusBadgeClass = (status) => {
@@ -107,27 +100,54 @@ const RecentOrdersTable = ({ orders }) => {
       return 'Invalid Date';
     }
   };
+  
+  // Function to handle price formatting consistently
+  const formatPrice = (price) => {
+    if (typeof price === 'number') {
+      // Some prices are stored in cents, others in dollars
+      return price > 100 ? (price / 100).toFixed(2) : price.toFixed(2);
+    }
+    return '0.00';
+  };
+
+  // Calculate order total better handling different data structures
+  const getOrderTotal = (order) => {
+    if (typeof order.totalAmount === 'number') {
+      return formatPrice(order.totalAmount);
+    }
+    
+    if (order.amount) {
+      return formatPrice(order.amount);
+    }
+    
+    return '0.00';
+  };
+
+  // Get customer name with better fallback handling
+  const getCustomerName = (order) => {
+    if (order.user?.name) return order.user.name;
+    if (order.customer) return order.customer;
+    return order.customerId || 'N/A';
+  };
+
+  // Get order ID with better formatting
+  const getOrderId = (order) => {
+    console.log("asdfasdf",order);
+    if (order.orderId) return order.orderId;
+    if (order.id) return order.id;
+    if (order._id) return `#${order._id.substring(Math.max(0, order._id.length - 10))}`;
+    return 'N/A';
+  };
 
   const closeModal = () => {
-    console.log('Closing modal');
     setSelectedOrderId(null);
   };
 
-  // Function to refresh order details after update
   const refreshOrderDetails = () => {
-    console.log('Refreshing order details for ID:', selectedOrderId);
     if (selectedOrderId) {
       fetchOrderDetails(selectedOrderId);
     }
   };
-
-  // Debug: Log current state values
-  console.log('Current state:', { 
-    selectedOrderId, 
-    hasOrderDetails: !!orderDetails,
-    loading,
-    error
-  });
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -159,39 +179,34 @@ const RecentOrdersTable = ({ orders }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {orders.map((order) => (
-              <tr key={order.id} className="hover:bg-gray-50">
+            {orders.map((order, index) => (
+              <tr key={order.orderId} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #{order.id.substring(order.id.length - 10)}
+                  {getOrderId(order)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {order.customer}
+                  {getCustomerName(order)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {order.date}
+                  {formatDate(order.orderDate || order.createdAt || order.date)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  ${order.amount.toFixed(2)}
+                  ${getOrderTotal(order)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${order.status === 'Completed' ? 'bg-green-100 text-green-800' : 
-                      order.status === 'Processing' ? 'bg-blue-100 text-blue-800' : 
-                      order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
-                      order.status === 'Shipped' ? 'bg-purple-100 text-purple-800' :
-                      'bg-red-100 text-red-800'}`}>
-                    {order.status}
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}>
+                    {order.status || 'Unknown'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button 
-                    onClick={() => handleViewOrder(order.id)}
+                    onClick={() => handleViewOrder(order._id || order.id)}
                     className="text-primary-600 hover:text-primary-900 mr-3"
                   >
                     View
                   </button>
                   <button 
-                    onClick={() => handleEditOrder(order.id)}
+                    onClick={() => handleEditOrder(order._id || order.id)}
                     className="text-gray-600 hover:text-gray-900"
                   >
                     Edit
@@ -203,7 +218,10 @@ const RecentOrdersTable = ({ orders }) => {
         </table>
       </div>
       <div className="px-6 py-3 border-t">
-        <button className="text-sm text-primary-600 hover:text-primary-900 font-medium">
+        <button 
+          onClick={onViewAllOrders}
+          className="text-sm text-primary-600 hover:text-primary-900 font-medium"
+        >
           View all orders →
         </button>
       </div>
