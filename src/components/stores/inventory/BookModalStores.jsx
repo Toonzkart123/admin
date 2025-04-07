@@ -38,7 +38,7 @@ const BookModalStore = ({ book, isOpen, onClose, onSave, storeId }) => {
       
       // Set image preview if book has an image
       if (book.image) {
-        setImagePreview(`https://backend-lzb7.onrender.com${book.image}`);
+        setImagePreview(book.image);
       } else {
         setImagePreview(null);
       }
@@ -79,104 +79,80 @@ const BookModalStore = ({ book, isOpen, onClose, onSave, storeId }) => {
     setError('');
     
     try {
-      // Create a FormData object to handle multipart/form-data
-      const submitFormData = new FormData();
-      
-      // Add all text fields to the FormData object
-      Object.keys(formData).forEach(key => {
-        if (key !== 'image') {
-          submitFormData.append(key, formData[key]);
-        }
-      });
-      
-      // Add image file if it exists
-      if (formData.image instanceof File) {
-        submitFormData.append('image', formData.image);
-      }
-      
       // Get token from localStorage
       const token = localStorage.getItem('adminToken');
       
       if (!token) {
         throw new Error('Authentication token is required');
       }
+
+      // Prepare the book data
+      const bookData = {
+        title: formData.title,
+        author: formData.author,
+        isbn: formData.isbn,
+        category: formData.category,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+        discount: formData.discount ? parseFloat(formData.discount) : undefined,
+        stock: parseInt(formData.stock),
+        status: formData.status,
+        publisher: formData.publisher,
+        publishDate: formData.publishDate,
+        language: formData.language,
+        pages: formData.pages ? parseInt(formData.pages) : undefined,
+        quantity: 1, // Default quantity when adding to inventory
+        image: formData.image instanceof File ? URL.createObjectURL(formData.image) : formData.image
+      };
       
-      // Create new book or update existing one
-      let url = 'https://backend-lzb7.onrender.com/api/admin/books';
-      let method = 'POST';
-      
-      if (formData._id) {
-        url = `${url}/${formData._id}`;
-        method = 'PUT';
-      }
-      
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Don't set Content-Type header, the browser will set it correctly with the boundary for multipart/form-data
-        },
-        body: submitFormData
+      // Filter out undefined values
+      Object.keys(bookData).forEach(key => {
+        if (bookData[key] === undefined || bookData[key] === '') {
+          delete bookData[key];
+        }
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to save book: ${response.status} ${response.statusText}`);
+
+      // If editing an existing book
+      if (formData._id) {
+        // Create a response with the updated book data
+        const responseData = {
+          ...formData,
+          ...bookData
+        };
+        
+        // Return the response data to the parent component
+        onSave(responseData);
+        setIsSubmitting(false);
+      }
+      // If adding a new book to store
+      else if (storeId) {
+        // Add book to store inventory using the specified API
+        const response = await fetch(`https://backend-lzb7.onrender.com/api/admin/stores/${storeId}/inventory`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(bookData)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Failed to add book to store: ${response.status} ${response.statusText}`);
+        }
+        
+        const responseData = await response.json();
+        
+        // Return the response data to the parent component
+        onSave(responseData);
+        setIsSubmitting(false);
       }
       
-      // Get the response data with the book ID
-      const responseData = await response.json();
-      const bookId = responseData.book._id || responseData._id;
-      
-      // If we have a storeId and this is a new book, add it to the store's inventory
-      if (storeId && method === 'POST') {
-        await addBookToStore(bookId, storeId, token);
-      }
-      
-      // Return the response data to the parent component
-      onSave(responseData);
-      
-      setIsSubmitting(false);
     } catch (err) {
       console.error('Error saving book:', err);
       setError(err.message);
       setIsSubmitting(false);
-    }
-  };
-  
-  const addBookToStore = async (bookId, storeId, token) => {
-    try {
-      const url = `https://backend-lzb7.onrender.com/api/admin/stores/${storeId}`;
-      
-      const response = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          inventory: [
-            { book: bookId }
-          ]
-        })
-      });
-    //   console.log(JSON.stringify({
-    //     inventory: [
-    //       { book: bookId }
-    //     ]
-    //   }));
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to update store inventory: ${response.status} ${response.statusText}`);
-      }
-      
-      console.log('Book added to store inventory successfully');
-      return await response.json();
-    } catch (err) {
-      console.error('Error adding book to store inventory:', err);
-      setError(prev => prev + ' ' + err.message);
-      throw err;
     }
   };
 

@@ -75,6 +75,7 @@ const Dashboard = () => {
         // Transform the API response to match the expected format for RecentOrdersTable
         // Adjust this mapping based on your actual API response structure
         const formattedOrders = data.map(order => ({
+          orderId: order.orderId,
           id: order._id || order.orderId || order.id,
           customer: order.user?.name || order.customerName || 'Unknown Customer',
           date: new Date(order.createdAt).toISOString().split('T')[0],
@@ -145,7 +146,7 @@ const Dashboard = () => {
         />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> */}
         <div className="lg:col-span-2">
           {loading ? (
             <div className="p-4 bg-white rounded-lg shadow">
@@ -159,10 +160,10 @@ const Dashboard = () => {
             <RecentOrdersTable orders={orders} />
           )}
         </div>
-        <div>
+        {/* <div>
           <NotificationsPanel notifications={mockNotifications} />
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
     </div>
   );
 };

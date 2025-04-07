@@ -164,7 +164,7 @@ const StoreGrid = ({ stores, handleStoreClick }) => {
 
 const StoreCard = ({ store, onClick }) => {
   const imageUrl = store.image 
-    ? `${API_BASE_URL}/${store.image}` 
+    ? `${store.image}` 
     : null;
     
   return (

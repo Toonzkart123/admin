@@ -61,7 +61,7 @@ const StoreInventory = ({ inventory = [], storeId, apiBaseUrl }) => {
         return {
           ...response.data,
           inventoryId: inventoryItems[index]._id,
-          stock: inventoryItems[index].stock
+          // stock: inventoryItems[index].stock
         };
       });
       
@@ -250,6 +250,7 @@ const InventoryTable = ({ inventory, onRemoveBook, onUpdateStock }) => {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {inventory.map((item) => {
+            console.log(item);
             const status = getBookStatus(item.stock || 0);
             
             return (
@@ -270,13 +271,7 @@ const InventoryTable = ({ inventory, onRemoveBook, onUpdateStock }) => {
                   ${item.price ? item.price.toFixed(2) : '0.00'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-16 rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    value={item.stock || 0}
-                    onChange={(e) => handleStockChange(e, item.inventoryId)}
-                  />
+                  {item.stock || 10}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getInventoryStatusClass(status)}`}>
