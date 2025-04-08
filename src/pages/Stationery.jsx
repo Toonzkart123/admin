@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Edit, Trash2, Filter, Download, Upload, 
   Search, ChevronDown, CheckCircle, Pencil, PenTool,
-  Info, Package, DollarSign, Tag, AlertCircle, Image as ImageIcon
+  Info, Package, DollarSign, Tag, AlertCircle, Image as ImageIcon,
+  Layers, Hash, Palette, Box
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -35,8 +36,13 @@ const Stationery = () => {
     category: '',
     brand: '',
     price: '',
+    originalPrice: '',
+    discount: '0',
     stock: '',
     description: '',
+    material: '',
+    color: '',
+    code: '',
     image: null,
     imagePreview: ''
   });
@@ -47,6 +53,11 @@ const Stationery = () => {
   // Upload status
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Category options
+  const categoryOptions = [
+    "Pens", "Pencils", "Notebooks", "Erasers", "Markers", "Files & Folders", "Other"
+  ];
 
   // Load stationery items
   useEffect(() => {
@@ -85,7 +96,7 @@ const Stationery = () => {
     };
     
     fetchStationeryItems();
-  }, [refreshTrigger]); // Add refreshTrigger as a dependency
+  }, [refreshTrigger]); 
 
   // Handle search and filtering
   const filteredItems = stationeryItems.filter(item => {
@@ -94,7 +105,8 @@ const Stationery = () => {
       (item.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
       (item.brand?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (item.category?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (item.description?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+      (item.description?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item.code?.toString() || '').includes(searchQuery)
     );
     
     // Category filter
@@ -111,6 +123,8 @@ const Stationery = () => {
     if (sortBy === 'price-desc') return (b.price || 0) - (a.price || 0);
     if (sortBy === 'stock-asc') return (a.stock || 0) - (b.stock || 0);
     if (sortBy === 'stock-desc') return (b.stock || 0) - (a.stock || 0);
+    if (sortBy === 'code-asc') return (a.code || 0) - (b.code || 0);
+    if (sortBy === 'code-desc') return (b.code || 0) - (a.code || 0);
     return 0;
   });
 
@@ -148,8 +162,13 @@ const Stationery = () => {
       category: '',
       brand: '',
       price: '',
+      originalPrice: '',
+      discount: '0',
       stock: '',
       description: '',
+      material: '',
+      color: '',
+      code: '',
       image: null,
       imagePreview: ''
     });
@@ -164,8 +183,13 @@ const Stationery = () => {
       category: item.category || '',
       brand: item.brand || '',
       price: item.price?.toString() || '',
+      originalPrice: item.originalPrice?.toString() || '',
+      discount: item.discount?.toString() || '0',
       stock: item.stock?.toString() || '',
       description: item.description || '',
+      material: item.material || '',
+      color: item.color || '',
+      code: item.code?.toString() || '',
       image: null,
       imagePreview: item.image || ''
     });
@@ -185,9 +209,9 @@ const Stationery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    if (!formData.name || !formData.category || !formData.price || !formData.stock) {
-      alert('Please fill all required fields');
+    // Validate form - required fields as per model: name, category, price, stock, code
+    if (!formData.name || !formData.category || !formData.price || !formData.stock || !formData.code) {
+      alert('Please fill all required fields: Name, Category, Price, Stock, and Code');
       return;
     }
 
@@ -214,10 +238,28 @@ const Stationery = () => {
       }
       
       multipartFormData.append('price', parseFloat(formData.price));
+      
+      if (formData.originalPrice) {
+        multipartFormData.append('originalPrice', parseFloat(formData.originalPrice));
+      }
+      
+      if (formData.discount) {
+        multipartFormData.append('discount', parseFloat(formData.discount));
+      }
+      
       multipartFormData.append('stock', parseInt(formData.stock));
+      multipartFormData.append('code', parseInt(formData.code));
       
       if (formData.description) {
         multipartFormData.append('description', formData.description);
+      }
+      
+      if (formData.material) {
+        multipartFormData.append('material', formData.material);
+      }
+      
+      if (formData.color) {
+        multipartFormData.append('color', formData.color);
       }
       
       // Add status based on stock
@@ -313,59 +355,96 @@ const Stationery = () => {
     }
   };
 
+  // Pagination navigation
+  const goToPage = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Create pagination array with ellipsis for large page counts
+  const getPaginationGroup = () => {
+    let start = Math.max(currentPage - 2, 1);
+    let end = Math.min(start + 4, totalPages);
+    
+    if (end - start < 4) {
+      start = Math.max(end - 4, 1);
+    }
+    
+    let pages = [];
+    
+    // Add first page and ellipsis if needed
+    if (start > 1) {
+      pages.push(1);
+      if (start > 2) pages.push('...');
+    }
+    
+    // Add middle pages
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    // Add ellipsis and last page if needed
+    if (end < totalPages) {
+      if (end < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6 max-w-full overflow-x-hidden">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center">
             <PenTool className="mr-2" />
             Stationery Inventory
           </h1>
-          <p className="text-gray-600">Manage your stationery products inventory</p>
+          <p className="text-sm md:text-base text-gray-600">Manage your stationery products inventory</p>
         </div>
         <button 
           onClick={handleAddItem}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white px-3 py-2 rounded-lg flex items-center hover:bg-blue-700 transition-colors text-sm md:text-base w-full md:w-auto justify-center"
         >
-          <Plus size={18} className="mr-1" />
+          <Plus size={16} className="mr-1" />
           Add New Item
         </button>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center w-full md:w-auto">
-            <div className="relative flex-grow md:w-64">
+      <div className="bg-white rounded-lg shadow-sm p-3 md:p-4 mb-4 md:mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="w-full md:w-64">
+            <div className="relative">
               <input
                 type="text"
-                placeholder="Search stationery items..."
-                className="border rounded-lg pl-10 pr-4 py-2 w-full"
+                placeholder="Search by name, code, brand..."
+                className="border rounded-lg pl-9 pr-3 py-2 w-full text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center">
-              <label className="mr-2 text-gray-600 whitespace-nowrap">Category:</label>
               <select
-                className="border rounded-lg px-3 py-2"
+                className="border rounded-lg px-2 py-2 text-sm"
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
               >
-                {categories.map((category, index) => (
+                <option value="All">All Categories</option>
+                {categoryOptions.map((category, index) => (
                   <option key={index} value={category}>{category}</option>
                 ))}
               </select>
             </div>
 
             <div className="flex items-center">
-              <label className="mr-2 text-gray-600 whitespace-nowrap">Sort By:</label>
               <select
-                className="border rounded-lg px-3 py-2"
+                className="border rounded-lg px-2 py-2 text-sm"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
@@ -375,16 +454,13 @@ const Stationery = () => {
                 <option value="price-desc">Price (High to Low)</option>
                 <option value="stock-asc">Stock (Low to High)</option>
                 <option value="stock-desc">Stock (High to Low)</option>
+                <option value="code-asc">Code (Low to High)</option>
+                <option value="code-desc">Code (High to Low)</option>
               </select>
             </div>
 
-            <button className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg flex items-center hover:bg-gray-200">
-              <Filter size={16} className="mr-1" />
-              More Filters
-            </button>
-
-            <button className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg flex items-center hover:bg-gray-200">
-              <Download size={16} className="mr-1" />
+            <button className="bg-gray-100 text-gray-600 px-3 py-2 rounded-lg flex items-center hover:bg-gray-200 text-sm">
+              <Download size={14} className="mr-1" />
               Export
             </button>
           </div>
@@ -405,28 +481,28 @@ const Stationery = () => {
               <p>{error}</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40 md:w-60">
                     Product
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Brand
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Code
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Price
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                     Stock
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                     Actions
                   </th>
                 </tr>
@@ -443,9 +519,9 @@ const Stationery = () => {
                 ) : (
                   currentItems.map(item => (
                     <tr key={item._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 mr-3 overflow-hidden">
+                          <div className="h-9 w-9 bg-gray-100 rounded-md flex items-center justify-center text-gray-500 mr-2 overflow-hidden flex-shrink-0">
                             {item.image ? (
                               <img 
                                 src={item.image} 
@@ -454,67 +530,75 @@ const Stationery = () => {
                                 onError={(e) => {
                                   e.target.onError = null;
                                   e.target.src = "";
-                                  e.target.parentNode.innerHTML = '<span class="text-gray-400"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 8h.5a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2h.5"/><path d="M8 7V3.5a2.5 2.5 0 0 1 5 0V7"/><path d="M6 10h12"/><path d="M11 14h2"/></svg></span>';
+                                  e.target.parentNode.innerHTML = '<span class="text-gray-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></span>';
                                 }}
                               />
                             ) : (
-                              <Pencil size={18} />
+                              <Pencil size={16} />
                             )}
                           </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{item.name}</div>
-                            <div className="text-sm text-gray-500 truncate max-w-xs">{item.description}</div>
+                          <div className="truncate max-w-xs">
+                            <div className="font-medium text-gray-900 text-sm truncate">{item.name}</div>
+                            <div className="text-xs text-gray-500 truncate">{item.brand || '-'}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap">
                         {item.category ? (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                             {item.category}
                           </span>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400 text-xs">-</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                        {item.brand || '-'}
+                      <td className="px-3 py-3 whitespace-nowrap text-gray-700 text-sm">
+                        <span className="flex items-center">
+                          <Hash size={14} className="text-gray-400 mr-1" />
+                          {item.code || '-'}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        <div className="flex items-center">
-                          <DollarSign size={16} className="text-gray-400 mr-1" />
-                          {item.price?.toFixed(2)}
+                      <td className="px-3 py-3 whitespace-nowrap text-sm">
+                        <div>
+                          <div className="font-medium flex items-center">
+                            <span className="text-gray-400 mr-1">₹</span>
+                            {item.price?.toFixed(2)}
+                          </div>
+                          {item.originalPrice && item.originalPrice > item.price && (
+                            <div className="text-xs text-gray-500 line-through">₹{item.originalPrice.toFixed(2)}</div>
+                          )}
                           {item.discount > 0 && (
-                            <span className="ml-2 text-xs text-green-600">-{item.discount}%</span>
+                            <span className="text-xs text-green-600">-{item.discount}%</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                      <td className="px-3 py-3 whitespace-nowrap text-gray-700 text-sm">
                         {item.stock} units
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-3 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                           item.status === 'In Stock' 
                             ? 'bg-green-100 text-green-800' 
-                            : item.status === 'Low Stock'
-                            ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
                           {item.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-center space-x-2">
+                      <td className="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-center space-x-1">
                           <button 
                             onClick={() => handleEditItem(item)}
                             className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                            title="Edit"
                           >
-                            <Edit size={18} />
+                            <Edit size={16} />
                           </button>
                           <button 
                             onClick={() => handleDeleteItem(item._id)}
                             className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                            title="Delete"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -526,12 +610,12 @@ const Stationery = () => {
           )}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Improved for mobile and better navigation */}
         {!loading && !error && sortedItems.length > 0 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div className="bg-white px-3 py-3 flex items-center justify-between border-t border-gray-200 sm:px-4">
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-gray-700">
+                <p className="text-xs text-gray-700">
                   Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
                   <span className="font-medium">
                     {Math.min(indexOfLastItem, sortedItems.length)}
@@ -542,7 +626,7 @@ const Stationery = () => {
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
                     className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
                       currentPage === 1 
@@ -551,26 +635,38 @@ const Stationery = () => {
                     }`}
                   >
                     <span className="sr-only">Previous</span>
-                    <ChevronDown className="h-5 w-5 transform rotate-90" />
+                    <ChevronDown className="h-4 w-4 transform rotate-90" />
                   </button>
                   
-                  {/* Page numbers */}
-                  {[...Array(totalPages)].map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentPage(index + 1)}
-                      className={`relative inline-flex items-center px-4 py-2 border ${
-                        currentPage === index + 1
-                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                      } text-sm font-medium`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
+                  {/* Page numbers with ellipsis for large page counts */}
+                  {getPaginationGroup().map((page, index) => {
+                    if (page === '...') {
+                      return (
+                        <span 
+                          key={index} 
+                          className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => goToPage(page)}
+                        className={`relative inline-flex items-center px-3 py-2 border ${
+                          currentPage === page
+                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        } text-sm font-medium`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
 
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
                       currentPage === totalPages 
@@ -579,10 +675,37 @@ const Stationery = () => {
                     }`}
                   >
                     <span className="sr-only">Next</span>
-                    <ChevronDown className="h-5 w-5 transform -rotate-90" />
+                    <ChevronDown className="h-4 w-4 transform -rotate-90" />
                   </button>
                 </nav>
               </div>
+            </div>
+            
+            {/* Mobile pagination */}
+            <div className="flex justify-between items-center w-full sm:hidden">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 border rounded text-sm ${
+                  currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'
+                }`}
+              >
+                Previous
+              </button>
+              
+              <span className="text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 border rounded text-sm ${
+                  currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'
+                }`}
+              >
+                Next
+              </button>
             </div>
           </div>
         )}
@@ -590,188 +713,312 @@ const Stationery = () => {
 
       {/* Modal for Add/Edit Item */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b">
+              <h2 className="text-lg font-bold text-gray-800">
                 {currentItem ? 'Edit Stationery Item' : 'Add New Stationery Item'}
               </h2>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left Column */}
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Item Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="border rounded-lg px-3 py-2 w-full"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="border rounded-lg px-3 py-2 w-full"
-                      required
-                    >
-                      <option value="">Select a category</option>
-                      <option value="Pens">Pens</option>
-                      <option value="Pencils">Pencils</option>
-                      <option value="Notebooks">Notebooks</option>
-                      <option value="Erasers">Erasers</option>
-                      <option value="Markers">Markers</option>
-                      <option value="Files & Folders">Files & Folders</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Brand
-                    </label>
-                    <input
-                      type="text"
-                      name="brand"
-                      value={formData.brand}
-                      onChange={handleInputChange}
-                      className="border rounded-lg px-3 py-2 w-full"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      className="border rounded-lg px-3 py-2 w-full"
-                      rows={3}
-                    />
-                  </div>
-
-                  {/* Product Image Upload */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Product Image
-                    </label>
-                    <div className="mt-1 flex items-center">
-                      <div 
-                        onClick={() => fileInputRef.current.click()}
-                        className="relative cursor-pointer bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors"
+                  {/* Basic Information */}
+                  <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                    <h3 className="text-sm font-medium text-gray-700 border-b pb-2">Basic Information</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="border rounded-lg px-3 py-2 w-full text-sm"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        className="border rounded-lg px-3 py-2 w-full text-sm"
+                        required
                       >
-                        {formData.imagePreview ? (
-                          <>
-                            <img 
-                              src={formData.imagePreview} 
-                              alt="Product preview" 
-                              className="h-32 w-32 object-contain mb-3"
-                            />
-                            <p className="text-xs text-blue-600">Click to change</p>
-                          </>
-                        ) : (
-                          <>
-                            <ImageIcon size={36} className="text-gray-400 mb-2" />
-                            <p className="text-sm text-gray-500">Upload image</p>
-                            <p className="text-xs text-gray-400 mt-1">Click to browse</p>
-                          </>
-                        )}
+                        <option value="">Select a category</option>
+                        {categoryOptions.map((category, index) => (
+                          <option key={index} value={category}>{category}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Brand
+                      </label>
+                      <input
+                        type="text"
+                        name="brand"
+                        value={formData.brand}
+                        onChange={handleInputChange}
+                        className="border rounded-lg px-3 py-2 w-full text-sm"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Code <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Hash size={14} className="text-gray-400" />
+                        </div>
                         <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFileChange}
+                          type="number"
+                          name="code"
+                          min="0"
+                          value={formData.code}
+                          onChange={handleInputChange}
+                          className="border rounded-lg pl-8 px-3 py-2 w-full text-sm"
+                          required
                         />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Product Details */}
+                  <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                    <h3 className="text-sm font-medium text-gray-700 border-b pb-2">Product Details</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        className="border rounded-lg px-3 py-2 w-full text-sm"
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Material
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Layers size={14} className="text-gray-400" />
+                          </div>
+                          <input
+                            type="text"
+                            name="material"
+                            value={formData.material}
+                            onChange={handleInputChange}
+                            className="border rounded-lg pl-8 px-3 py-2 w-full text-sm"
+                            placeholder="e.g., Plastic, Metal"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Color
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Palette size={14} className="text-gray-400" />
+                          </div>
+                          <input
+                            type="text"
+                            name="color"
+                            value={formData.color}
+                            onChange={handleInputChange}
+                            className="border rounded-lg pl-8 px-3 py-2 w-full text-sm"
+                            placeholder="e.g., Blue, Red"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 
+                {/* Right Column */}
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Price (₹) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">₹</span>
+                  {/* Pricing and Inventory */}
+                  <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                    <h3 className="text-sm font-medium text-gray-700 border-b pb-2">Pricing & Inventory</h3>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Selling Price (₹) <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">₹</span>
+                          </div>
+                          <input
+                            type="number"
+                            name="price"
+                            min="0"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={handleInputChange}
+                            className="border rounded-lg pl-7 pr-3 py-2 w-full text-sm"
+                            required
+                          />
+                        </div>
                       </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          MRP (₹)
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">₹</span>
+                          </div>
+                          <input
+                            type="number"
+                            name="originalPrice"
+                            min="0"
+                            step="0.01"
+                            value={formData.originalPrice}
+                            onChange={handleInputChange}
+                            className="border rounded-lg pl-7 pr-3 py-2 w-full text-sm"
+                            placeholder="Original price"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Discount (%)
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">%</span>
+                          </div>
+                          <input
+                            type="number"
+                            name="discount"
+                            min="0"
+                            max="100"
+                            value={formData.discount}
+                            onChange={handleInputChange}
+                            className="border rounded-lg pl-7 pr-3 py-2 w-full text-sm"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Stock Quantity <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Box size={14} className="text-gray-400" />
+                          </div>
+                          <input
+                            type="number"
+                            name="stock"
+                            min="0"
+                            value={formData.stock}
+                            onChange={handleInputChange}
+                            className="border rounded-lg pl-8 px-3 py-2 w-full text-sm"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Product Image */}
+                  <div className="p-3 bg-gray-50 rounded-lg space-y-3">
+                    <h3 className="text-sm font-medium text-gray-700 border-b pb-2">Product Image</h3>
+                    
+                    <div 
+                      onClick={() => fileInputRef.current.click()}
+                      className="cursor-pointer bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center hover:bg-gray-50 transition-colors"
+                    >
+                      {formData.imagePreview ? (
+                        <>
+                          <img 
+                            src={formData.imagePreview} 
+                            alt="Product preview" 
+                            className="h-32 w-32 object-contain mb-2"
+                          />
+                          <p className="text-xs text-blue-600">Click to change</p>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon size={36} className="text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-500">Upload image</p>
+                          <p className="text-xs text-gray-400 mt-1">Click to browse</p>
+                        </>
+                      )}
                       <input
-                        type="number"
-                        name="price"
-                        min="0"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        className="border rounded-lg pl-8 pr-3 py-2 w-full"
-                        required
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
                       />
                     </div>
-                  </div>
-                  
-                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Stock Quantity <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="stock"
-                      min="0"
-                      value={formData.stock}
-                      onChange={handleInputChange}
-                      className="border rounded-lg px-3 py-2 w-full"
-                      required
-                    />
-                  </div>
-                  
-                  {/* Upload Progress */}
-                  {isUploading && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Upload Progress
-                      </label>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className="bg-blue-600 h-2.5 rounded-full" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
+                    
+                    {/* Upload Progress */}
+                    {isUploading && (
+                      <div>
+                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <span>Upload Progress</span>
+                          <span>{uploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div 
+                            className="bg-blue-600 h-1.5 rounded-full" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1 text-right">{uploadProgress}% Complete</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
-                    <div className="flex items-start">
-                      <Info size={16} className="text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
-                      <div className="text-sm text-blue-800">
-                        <p className="font-medium">Multipart Form Data:</p>
-                        <p>This form now uses multipart/form-data which supports file uploads.</p>
-                        <p className="mt-1">Items with stock below 20 will be marked as "Low Stock".</p>
+                  {/* Info Alert */}
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <div className="flex">
+                      <Info size={14} className="text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                      <div className="text-xs text-blue-800">
+                        <p className="font-medium">Important Information:</p>
+                        <ul className="list-disc pl-4 mt-1 space-y-1">
+                          <li>Fields marked with <span className="text-red-500">*</span> are required</li>
+                          <li>Product code must be unique across all items</li>
+                          <li>Items with zero stock will be marked as "Out of Stock"</li>
+                        </ul>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-8 flex justify-end space-x-3">
+              <div className="mt-6 flex justify-end space-x-3 border-t pt-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm"
                   disabled={isUploading}
                 >
                   Cancel
@@ -779,7 +1026,7 @@ const Stationery = () => {
                 <button
                   type="submit"
                   disabled={isUploading}
-                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center text-sm ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {isUploading && (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
