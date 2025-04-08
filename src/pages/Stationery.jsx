@@ -210,7 +210,7 @@ const Stationery = () => {
     e.preventDefault();
     
     // Validate form - required fields as per model: name, category, price, stock, code
-    if (!formData.name || !formData.category || !formData.price || !formData.stock || !formData.code) {
+    if (!formData.name || !formData.price || !formData.stock) {
       alert('Please fill all required fields: Name, Category, Price, Stock, and Code');
       return;
     }
