@@ -50,17 +50,15 @@ const Schools = () => {
     fetchSchools();
   }, []);
 
+  // Search functionality
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredSchools(schools);
     } else {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-  
       const filtered = schools.filter(school => 
-        (school.name?.toLowerCase() ?? '').includes(lowerSearchTerm) ||
-        (school.address?.toLowerCase() ?? '').includes(lowerSearchTerm)
+        school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        school.address.toLowerCase().includes(searchTerm.toLowerCase())
       );
-  
       setFilteredSchools(filtered);
     }
   }, [searchTerm, schools]);
