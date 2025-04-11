@@ -11,6 +11,7 @@ import StoreTabs from '../components/stores/StoreTabs';
 import StoreEditForm from '../components/stores/StoreEditForm';
 import StoreOverview from '../components/stores/overview/StoreOverview';
 import StoreInventory from '../components/stores/inventory/StoreInventory';
+import StoreSchoolsTab from '../components/stores/StoreSchoolsTab';
 import FeaturePlaceholder from '../components/stores/FeaturePlaceholder';
 
 const API_BASE_URL = 'https://backend-lzb7.onrender.com';
@@ -286,6 +287,8 @@ const StoreDetails = () => {
           {activeTab === 'analytics' && (
             <FeaturePlaceholder icon={<BarChart2 />} title="Store Analytics" />
           )}
+
+          {activeTab === 'schools' && <StoreSchoolsTab storeId={id} />}
         </>
       )}
     </div>
