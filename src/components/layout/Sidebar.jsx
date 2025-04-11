@@ -18,7 +18,7 @@ const navItems = [
   { title: 'Schools', icon: <GraduationCap />, path: '/schools' },
   // { title: 'Financials', icon: <DollarSign />, path: '/financials' },
   { title: 'Promotions', icon: <Tag />, path: '/promotions' },
-  { title: 'Reviews', icon: <Star />, path: '/reviews' },
+  // { title: 'Reviews', icon: <Star />, path: '/reviews' },
   // { title: 'Analytics', icon: <BarChart2 />, path: '/analytics' },
   // { title: 'Marketing', icon: <Search />, path: '/marketing' },
   // { title: 'Security', icon: <Shield />, path: '/security' },
